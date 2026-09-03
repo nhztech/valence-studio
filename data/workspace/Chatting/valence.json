@@ -1,0 +1,1 @@
+{"format": 1, "name": "Chatting", "id": "com.tycept.chatting", "version": "1.0.0", "versionCode": 1, "entry": "public/index.html", "capabilities": [], "permissions": [], "network": {"enabled": true, "allow": ["*"]}, "android": {"minSdk": 24, "targetSdk": 34}}

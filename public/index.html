@@ -1,0 +1,1543 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#060812">
+  <meta name="description" content="Valence — web technologies to native android application by NHZTech">
+  <title>Valence IDE · NHZTech</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="assets/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      color-scheme:dark;
+      --bg:#070913;
+      --surface:#0c1020;
+      --surface-2:#10172a;
+      --surface-3:#151d34;
+      --line:#1e2943;
+      --line-2:#2b3f68;
+      --text:#eaf8ff;
+      --muted:#8da0bd;
+      --dim:#5f718f;
+      --cyan:#28f3ff;
+      --blue:#229cff;
+      --green:#56ffd5;
+      --warning:#ffd166;
+      --danger:#ff5f7d;
+      --shadow:0 18px 60px rgba(0,0,0,.35);
+      --glow:0 0 28px rgba(40,243,255,.22),0 0 6px rgba(40,243,255,.45);
+      --font:'Orbitron','Rajdhani','Segoe UI',system-ui,sans-serif;
+      --mono:'Cascadia Code','JetBrains Mono','SFMono-Regular',Consolas,monospace;
+      --editor-size:13px;
+      --syntax-tag:#7dd3fc;--syntax-attr:#fbbf24;--syntax-string:#86efac;--syntax-comment:#64748b;--syntax-keyword:#c084fc;--syntax-number:#fca5a5;
+    }
+    [data-theme="light"]{
+      color-scheme:light;
+      --bg:#eef6ff;
+      --surface:#ffffff;
+      --surface-2:#f4f9ff;
+      --surface-3:#e9f2ff;
+      --line:#d7e5f7;
+      --line-2:#b9cdea;
+      --text:#12223a;
+      --muted:#566b88;
+      --dim:#7b8da6;
+      --shadow:0 18px 55px rgba(55,91,135,.16);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:var(--font);overflow:hidden;touch-action:manipulation;-webkit-text-size-adjust:100%;overscroll-behavior:none}
+    button,input,select,textarea{font:inherit;color:inherit}
+    button{border:0;background:none;cursor:pointer}
+    .ui-icon{width:20px;height:20px;display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    ::selection{background:rgba(40,243,255,.25)}
+    ::-webkit-scrollbar{width:10px;height:10px}
+    ::-webkit-scrollbar-thumb{background:#273854;border:3px solid transparent;background-clip:content-box;border-radius:99px}
+    ::-webkit-scrollbar-track{background:transparent}
+
+    .app{height:100dvh;display:grid;grid-template-rows:58px minmax(0,1fr);background:
+      radial-gradient(800px 400px at 20% -10%,rgba(40,243,255,.10),transparent 60%),
+      radial-gradient(700px 380px at 100% 0%,rgba(34,156,255,.12),transparent 56%),var(--bg)}
+
+    .topbar{display:flex;align-items:center;gap:14px;padding:0 16px;border-bottom:1px solid var(--line);background:rgba(7,9,19,.82);backdrop-filter:blur(18px)}
+    [data-theme="light"] .topbar{background:rgba(255,255,255,.82)}
+    .menu-toggle{width:38px;height:38px;border:1px solid var(--line);border-radius:12px;display:grid;place-items:center;color:var(--cyan);background:var(--surface);box-shadow:var(--shadow);font-size:22px;line-height:1}
+    .brand{display:flex;align-items:center;gap:0;min-width:0}
+    .brand-mark{width:30px;height:30px;object-fit:contain;filter:drop-shadow(0 0 12px rgba(40,243,255,.65));margin-right:-5px;display:block}
+    .brand-main{display:flex;align-items:center;gap:0;font-size:22px;font-weight:800;letter-spacing:.045em;text-transform:lowercase;white-space:nowrap;line-height:1}
+        .brand-sub{margin-top:3px;color:var(--muted);font-size:10px;font-weight:600;letter-spacing:.17em;text-transform:lowercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55vw}
+    .top-actions{margin-left:auto;display:flex;gap:10px;align-items:center}
+    .status-pill{height:34px;display:flex;align-items:center;gap:8px;padding:0 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.12em}
+    .status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 18px var(--green)}
+    .primary{height:36px;padding:0 16px;border-radius:12px;background:linear-gradient(135deg,var(--cyan),var(--blue));color:#00111f;font-size:11px;font-weight:800;letter-spacing:.12em;box-shadow:0 0 24px rgba(40,243,255,.22)}
+
+    .main{min-height:0;display:grid;grid-template-columns:256px minmax(0,1fr);transition:grid-template-columns .22s ease}
+    .main.nav-collapsed{grid-template-columns:74px minmax(0,1fr)}
+    .sidebar{min-height:0;border-right:1px solid var(--line);background:linear-gradient(180deg,rgba(12,16,32,.96),rgba(9,12,24,.96));padding:14px;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+    [data-theme="light"] .sidebar{background:rgba(255,255,255,.8)}
+    .main.nav-collapsed .nav-text,.main.nav-collapsed .nav-hint{display:none}
+        .workspace-hub{display:none;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:2px}.sidebar.workspace-context .workspace-hub{display:grid}.hub-btn{height:42px;border:1px solid var(--line);border-radius:13px;background:var(--surface-2);color:var(--muted);display:grid;place-items:center}.hub-btn:hover,.hub-btn.active{color:var(--cyan);border-color:rgba(40,243,255,.45);background:rgba(40,243,255,.12);box-shadow:inset 0 -2px 0 var(--cyan)}.drawer-panel{display:none;min-height:0;overflow:auto}.drawer-panel.active{display:block}.sidebar.tool-mode .nav,.sidebar.tool-mode .nav-hint{display:none}.drawer-title{margin:8px 0 12px;color:var(--cyan);font-size:10px;font-weight:800;letter-spacing:.2em;text-transform:uppercase}.drawer-list{display:grid;gap:6px}.drawer-file{height:34px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-radius:10px;padding:0 10px;color:var(--muted);font-family:var(--mono);font-size:11px;border:1px solid transparent}.drawer-file:hover,.drawer-file.active{color:var(--cyan);background:var(--surface-2);border-color:var(--line)}.drawer-search{height:38px;width:100%;border:1px solid var(--line-2);border-radius:11px;background:var(--bg);outline:0;padding:0 10px;font-family:var(--mono);font-size:12px}.drawer-result{display:grid;grid-template-columns:38px 1fr;gap:8px;margin-top:8px;padding:8px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--muted);font-family:var(--mono);font-size:11px;text-align:left}.drawer-result b{color:var(--cyan)}.drawer-term{height:230px;overflow:auto;border:1px solid var(--line);border-radius:12px;background:#02040a;color:#8cecff;padding:12px;white-space:pre-wrap;font-family:var(--mono);font-size:11px;line-height:1.55}.drawer-term-input{width:100%;height:34px;margin-top:9px;border:1px solid var(--line-2);border-radius:10px;background:#02040a;color:#fff;padding:0 10px;font-family:var(--mono);font-size:12px;outline:0}
+.nav{display:grid;gap:8px}
+    .nav button{height:46px;border-radius:14px;color:var(--muted);display:flex;align-items:center;gap:12px;padding:0 13px;border:1px solid transparent;text-align:left;transition:.15s ease}
+    .nav button:hover{background:var(--surface-2);color:var(--text);border-color:var(--line)}
+    .nav button.active{background:linear-gradient(135deg,rgba(40,243,255,.16),rgba(34,156,255,.08));border-color:rgba(40,243,255,.35);color:var(--cyan);box-shadow:inset 3px 0 0 var(--cyan)}
+    .nav-icon{width:22px;height:22px;display:grid;place-items:center;flex:none;font-size:18px}
+    .nav-text{font-size:12px;font-weight:700;letter-spacing:.08em}.nav-text small{display:block;margin-top:2px;font-family:var(--mono);font-size:9px;font-weight:500;color:var(--dim);letter-spacing:0}
+    .nav-hint{margin-top:auto;border:1px solid var(--line);border-radius:16px;padding:12px;background:var(--surface);color:var(--muted);font-family:var(--mono);font-size:11px;line-height:1.55}
+
+    .content{min-width:0;min-height:0;overflow:hidden}.page{display:none;height:100%;overflow:auto}.page.active{display:block}.page-pad{padding:22px;max-width:1220px;margin:0 auto}.section-head{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:18px}.eyebrow{color:var(--cyan);font-size:10px;font-weight:800;letter-spacing:.25em;text-transform:uppercase}.section-head h1{margin:5px 0 0;font-size:30px;letter-spacing:.04em}.section-head p{margin:6px 0 0;color:var(--muted);font-family:var(--mono);font-size:12px;line-height:1.55}.section-head .primary{margin-top:18px}.grid{display:grid;gap:14px}.cards{grid-template-columns:repeat(4,minmax(0,1fr))}.two{grid-template-columns:minmax(0,1fr) minmax(320px,.7fr)}.panel{border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,var(--surface),var(--surface-2));box-shadow:var(--shadow);overflow:hidden}.panel-head{height:44px;padding:0 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;color:var(--cyan);font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase}.panel-body{padding:16px}.metric{padding:16px}.metric b{font-size:25px;color:var(--text)}.metric span{display:block;margin-top:8px;color:var(--muted);font-family:var(--mono);font-size:11px}.progress{height:8px;border-radius:99px;background:var(--surface-3);overflow:hidden;margin-top:14px}.progress i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--cyan),var(--blue));box-shadow:var(--glow)}.feature-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.feature{border:1px solid var(--line);border-radius:14px;padding:12px;background:rgba(255,255,255,.02)}.feature strong{display:block;font-size:12px;color:var(--text);margin-bottom:6px}.feature p{margin:0;color:var(--muted);font-family:var(--mono);font-size:11px;line-height:1.5}.timeline{display:grid;gap:10px}.timeline div{padding:11px 12px;border-left:2px solid var(--cyan);background:rgba(40,243,255,.05);border-radius:0 12px 12px 0}.timeline b{display:block;font-size:12px}.timeline span{font-family:var(--mono);font-size:11px;color:var(--muted)}
+
+    .tool-layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:14px}.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{display:grid;gap:7px}.field.full{grid-column:1/-1}.field label{color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.15em;text-transform:uppercase}.input,select{height:42px;border:1px solid var(--line-2);background:var(--bg);border-radius:12px;outline:0;padding:0 12px;font-family:var(--mono);font-size:12px}.input:focus,select:focus{border-color:var(--cyan);box-shadow:var(--glow)}.check-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.check{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:12px;padding:10px;color:var(--muted);font-family:var(--mono);font-size:11px}.check input{accent-color:var(--cyan)}.terminal{background:#02040a;color:#9ee9ff;border-radius:14px;padding:14px;font-family:var(--mono);font-size:12px;line-height:1.7;min-height:230px;border:1px solid var(--line);white-space:pre-wrap}.build-big{width:100%;height:46px;margin-top:14px}.note{color:var(--muted);font-family:var(--mono);font-size:11px;line-height:1.7;margin:0}.badge-row{display:flex;flex-wrap:wrap;gap:8px}.badge{border:1px solid var(--line);border-radius:999px;padding:7px 10px;color:var(--muted);font-family:var(--mono);font-size:10px;background:var(--surface)}
+
+    
+    .workspace{height:100%;display:grid!important;grid-template-rows:42px minmax(0,1fr) 28px;overflow:hidden;background:#050812;position:relative}
+    .workspace-top{display:flex;align-items:center;gap:8px;padding:0 8px;border-bottom:1px solid var(--line);background:var(--surface);position:relative;z-index:4}.workspace-title{display:flex;align-items:center;gap:8px;color:var(--cyan);font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}.workspace-tabs{display:flex;align-items:center;gap:6px;margin-left:0;min-width:0;overflow:auto;flex:1;scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}.workspace-tabs::-webkit-scrollbar{height:4px}.workspace-tabs::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:99px}.tab{height:28px;padding:0 7px 0 9px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);color:var(--muted);font-family:var(--mono);font-size:11px;flex:none;max-width:170px}.tab.active{color:var(--cyan);border-color:rgba(40,243,255,.35);background:#07101d}.workspace-run{margin-left:0;width:34px;height:32px;border:1px solid var(--line);border-radius:10px;display:grid;place-items:center;color:var(--green);background:var(--surface-2);flex:none}.workspace-run:hover{border-color:rgba(86,255,213,.45);background:rgba(86,255,213,.1)}
+    .workspace-body{min-height:0;display:grid;grid-template-columns:minmax(0,1fr)}.editor-pane{min-width:0;min-height:0;display:grid;grid-template-rows:minmax(0,1fr) 110px;background:#050812}.code-wrap{min-height:0;display:grid;grid-template-columns:50px minmax(0,1fr);position:relative}.gutter{padding:12px 9px;text-align:right;color:#38506e;border-right:1px solid var(--line);font-family:var(--mono);font-size:var(--editor-size);line-height:1.45;overflow:hidden;user-select:none}.editor-stack{position:relative;min-width:0;min-height:0;overflow:hidden}.highlight-layer,.code{position:absolute;inset:0;margin:0;padding:12px 13px;font-family:var(--mono);font-size:var(--editor-size);line-height:1.45;tab-size:2;white-space:pre;overflow:auto}.highlight-layer{pointer-events:none;color:#d9f5ff;background:transparent}.code{resize:none;border:0;outline:0;background:transparent;color:transparent;-webkit-text-fill-color:transparent;caret-color:var(--cyan);z-index:2}.code::selection{background:rgba(40,243,255,.25)}.word-wrap .highlight-layer,.word-wrap .code{white-space:pre-wrap}.tok-tag{color:var(--syntax-tag)}.tok-attr{color:var(--syntax-attr)}.tok-string{color:var(--syntax-string)}.tok-comment{color:var(--syntax-comment);font-style:italic}.tok-keyword{color:var(--syntax-keyword)}.tok-number{color:var(--syntax-number)}.suggest-box{position:absolute;z-index:6;display:none;min-width:190px;max-width:280px;border:1px solid var(--line-2);border-radius:10px;background:#08101e;box-shadow:0 18px 45px rgba(0,0,0,.45);overflow:hidden;font-family:var(--mono);font-size:12px}.suggest-box.open{display:block}.suggest-item{display:flex;justify-content:space-between;gap:12px;width:100%;padding:8px 10px;color:var(--muted);text-align:left}.suggest-item.active,.suggest-item:hover{background:rgba(40,243,255,.12);color:var(--cyan)}.suggest-item small{color:var(--dim)}.console{border-top:1px solid var(--line);background:#02040a;color:#8cecff;font-family:var(--mono);font-size:12px;line-height:1.45;padding:10px 12px;overflow:auto}.mini-btn{height:27px;padding:0 9px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--muted);font-family:var(--mono);font-size:10px}.mini-btn:hover{color:var(--cyan);border-color:rgba(40,243,255,.45)}.workspace-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 10px;border-top:1px solid var(--line);background:var(--surface);color:var(--dim);font-family:var(--mono);font-size:11px;white-space:nowrap;overflow:hidden}.footer-left,.footer-right{display:flex;align-items:center;gap:12px;min-width:0}.diag{display:flex;align-items:center;gap:4px}.diag.error{color:var(--danger)}.diag.warning{color:var(--warning)}.footer-lang{color:var(--cyan);cursor:pointer}.footer-pos{color:var(--muted)}
+
+    .runner-page{height:100%;display:grid!important;grid-template-rows:48px minmax(0,1fr);background:#050812;overflow:hidden}.runner-page:not(.active){display:none!important}.runner-top{display:flex;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid var(--line);background:var(--surface)}.runner-title{color:var(--green);font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;margin-right:auto}.runner-meta{color:var(--muted);font-family:var(--mono);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.runner-body{min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:0}.runner-preview{min-width:0;min-height:0;padding:12px;background:#02040a}.runner-frame{width:100%;height:100%;border:0;border-radius:12px;background:#fff}.runner-side{min-width:0;min-height:0;border-left:1px solid var(--line);background:var(--surface);display:grid;grid-template-rows:40px minmax(0,1fr)}.runner-side h3{margin:0;padding:0 12px;display:flex;align-items:center;color:var(--cyan);font-size:10px;letter-spacing:.18em;text-transform:uppercase;border-bottom:1px solid var(--line)}.runner-log{padding:12px;color:#9ee9ff;background:#02040a;font-family:var(--mono);font-size:12px;line-height:1.55;white-space:pre-wrap;overflow:auto}.runner-placeholder{height:100%;display:grid;place-items:center;border:1px dashed var(--line-2);border-radius:12px;color:var(--muted);font-family:var(--mono);font-size:12px;line-height:1.7;text-align:center;padding:18px}.runner-actions{display:flex;gap:8px}.runner-actions button{height:30px;padding:0 10px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);color:var(--muted);font-family:var(--mono);font-size:10px}.runner-actions button:hover{color:var(--cyan);border-color:rgba(40,243,255,.45)}
+
+    .about-copy{color:var(--muted);font-family:var(--mono);font-size:13px;line-height:1.8}.settings-list{display:grid;gap:12px}.setting-row{display:flex;align-items:center;justify-content:space-between;gap:14px;border:1px solid var(--line);border-radius:14px;padding:12px;background:rgba(255,255,255,.02)}.setting-row b{font-size:12px}.setting-row span{display:block;margin-top:4px;color:var(--muted);font-family:var(--mono);font-size:11px}.switch{position:relative;width:48px;height:26px}.switch input{display:none}.switch i{position:absolute;inset:0;border-radius:99px;background:var(--surface-3);border:1px solid var(--line-2)}.switch i:before{content:"";position:absolute;width:20px;height:20px;top:2px;left:3px;border-radius:50%;background:var(--muted);transition:.18s}.switch input:checked+i{background:rgba(40,243,255,.16);border-color:var(--cyan)}.switch input:checked+i:before{left:23px;background:var(--cyan);box-shadow:var(--glow)}@media (max-width:1000px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.two,.tool-layout{grid-template-columns:1fr}.workspace-body{grid-template-columns:minmax(0,1fr)}.brand-sub{max-width:38vw}.status-pill{display:none}}
+    .workspace-tabs{-webkit-overflow-scrolling:touch;touch-action:pan-x}.tab{display:flex;align-items:center;gap:6px;user-select:none;touch-action:manipulation}.tab.dragging{opacity:.45}.tab.drop-before{box-shadow:-3px 0 0 var(--cyan)}
+    .tree{font-family:var(--mono);font-size:11px}.tree-row{width:100%;height:32px;display:flex;align-items:center;gap:8px;border-radius:9px;padding:0 8px;color:var(--muted);text-align:left}.tree-row:hover,.tree-row.active{background:var(--surface-2);color:var(--cyan)}.tree-icon,.tree-caret{width:17px;height:17px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.tree-caret{transition:transform .14s}.tree-folder:not(.open)>.tree-row .tree-caret{transform:rotate(-90deg)}.tree-children{display:none;margin-left:16px;border-left:1px solid var(--line);padding-left:6px}.tree-folder.open>.tree-children{display:block}.tree-row.folder span{font-weight:700;color:var(--text)}
+    .gcard .panel-head{color:var(--green)}.g-head{display:flex;align-items:center;gap:8px}.g-glyph{width:16px;height:16px;flex:none}.g-row{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:8px;background:rgba(255,255,255,.02)}.g-key{flex:none;width:62px;color:var(--muted);font-family:var(--mono);font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}.g-val{flex:1;min-width:0;font-family:var(--mono);font-size:11px;color:var(--cyan);overflow-wrap:anywhere;line-height:1.5}.g-val.empty{color:var(--dim);font-style:italic}.g-row .mini-btn{flex:none}.g-steps{margin:12px 0 0;padding:0 0 0 2px;list-style:none;display:grid;gap:7px;color:var(--muted);font-family:var(--mono);font-size:11px;line-height:1.6}.g-steps li{display:flex;gap:8px}.g-num{flex:none;width:16px;height:16px;border-radius:50%;border:1px solid rgba(86,255,213,.45);color:var(--green);font-size:9px;display:grid;place-items:center;margin-top:1px}.g-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex:none}.g-ic{width:27px;padding:0;display:grid;place-items:center}
+    .stage-bar,.src-bar{display:flex;gap:4px;border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:4px}
+    .stage-bar{margin-bottom:10px}.src-bar{margin-bottom:14px}
+    .stage-bar button,.src-bar button{flex:1;height:38px;border:0;border-radius:10px;background:transparent;color:var(--muted);font-family:var(--mono);font-size:10px;font-weight:800;letter-spacing:.16em;cursor:pointer}
+    .stage-bar button.active,.src-bar button.active{background:rgba(40,243,255,.12);color:var(--cyan);box-shadow:inset 0 0 0 1px rgba(40,243,255,.35),0 0 18px rgba(40,243,255,.12)}
+    .stage-hint{margin:0 0 14px;color:var(--dim)}.locked{opacity:.35;pointer-events:none}
+    .stage[hidden]{display:none}.pkg-wrap{display:flex;align-items:center;border:1px solid var(--line-2);background:var(--bg);border-radius:12px;height:42px}.pkg-wrap:focus-within{border-color:var(--cyan);box-shadow:var(--glow)}.pkg-pre{padding:0 0 0 12px;color:var(--dim);font-family:var(--mono);font-size:12px}.pkg-wrap .input{border:0;height:100%;background:transparent;flex:1;box-shadow:none}
+    .build-dock{position:fixed;left:0;right:0;bottom:0;z-index:20;margin:0;padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,rgba(7,9,19,0),var(--bg) 45%)}#tools .page-pad{padding-bottom:96px}
+    .build-dock .primary{height:52px;border-radius:0;font-size:12px;letter-spacing:.22em;box-shadow:0 0 24px rgba(40,243,255,.25)}.build-dock .primary:disabled{background:#0a0f1c;color:#33415c;box-shadow:none;cursor:not-allowed}.dock-done{display:flex;gap:10px}.dock-done .primary{border-radius:0}.dock-done #apkDownload{flex:1}.dock-save{flex:0 0 110px}.g-state{color:var(--dim);font-family:var(--mono);font-size:10px;text-transform:none;letter-spacing:0;font-weight:600}
+    .drop-zone{border:2px dashed var(--line-2);border-radius:14px;padding:26px 14px;display:grid;justify-items:center;gap:8px;text-align:center;cursor:pointer;transition:.15s;color:var(--muted)}
+    .drop-zone b{display:block;color:var(--text);font-size:14px}
+    .drop-zone span{display:block;margin-top:4px;font-family:var(--mono);font-size:11px}
+    .drop-zone.drag{border-color:var(--cyan);box-shadow:var(--glow);color:var(--cyan);transform:scale(1.01)}
+    .drop-zone.done{border-style:solid;border-color:var(--cyan)}
+    .dz-icon{width:34px;height:34px;fill:none;stroke:var(--cyan);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+    .import-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+    .import-actions button{border:1px solid var(--line-2);background:var(--surface);border-radius:10px;padding:9px 12px;color:var(--muted);font-family:var(--mono);font-size:10px;letter-spacing:.08em;cursor:pointer}
+    .import-actions button:hover{color:var(--cyan);border-color:var(--cyan)}
+    .import-list{margin-top:12px;display:grid;gap:6px;max-height:240px;overflow:auto}
+    .import-empty{color:var(--muted);font-family:var(--mono);font-size:11px}
+    .import-row{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-family:var(--mono);font-size:11px}
+    .import-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;color:var(--text)}
+    .import-name:hover{color:var(--cyan)}
+    .import-meta{color:var(--muted);font-size:9px;white-space:nowrap}
+    .import-x{border:0;background:none;color:var(--muted);cursor:pointer;font-size:12px}
+    .import-x:hover{color:#ff5c7a}
+    .icon-pick{display:flex;align-items:center;gap:10px}
+    #iconPreview{width:42px;height:42px;border-radius:10px;border:1px solid var(--line-2);object-fit:cover;background:var(--bg)}
+    .icon-pick button{border:1px solid var(--line-2);background:var(--surface);border-radius:10px;padding:9px 12px;color:var(--muted);font-family:var(--mono);font-size:10px;cursor:pointer}
+    .icon-pick button:hover{color:var(--cyan);border-color:var(--cyan)}
+    .icon-pick span{color:var(--muted);font-family:var(--mono);font-size:9px}
+    .fb-flame{width:15px;height:15px;flex:none}
+    .fb-head{display:inline-flex;align-items:center;gap:7px}
+    .terminal{overflow-wrap:anywhere;word-break:break-word}
+    .import-list{overflow-x:hidden}
+    .import-row{min-width:0}
+    ::-webkit-scrollbar-corner{background:transparent}
+    .workspace-footer{display:grid!important;grid-template-columns:auto minmax(0,1fr);font-size:clamp(9px,2.4vw,11px);min-width:0}.footer-icon{width:14px;height:14px;display:block;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.footer-left,.footer-right{gap:clamp(5px,2vw,12px)}.footer-right{justify-content:flex-end;overflow:hidden}.footer-right>*{flex:none}.footer-pos b,.diag b{font-weight:800;color:currentColor}.footer-enc{color:var(--muted)}
+    .lang-icon{width:16px;height:16px;flex:none;display:block}.lang-html{color:#ff784f}.lang-css{color:#48a7ff}.lang-js{color:#ffd166}.lang-json{color:#86efac}.lang-md{color:#c084fc}.tab-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tab-close{width:18px;height:18px;border-radius:6px;color:var(--dim);display:grid;place-items:center;flex:none}.tab-close:hover{background:rgba(255,95,125,.12);color:var(--danger)}.tab-close svg{width:13px;height:13px}.output-frame{width:100%;height:100%;min-height:120px;border:0;border-radius:8px;background:#fff}.output-wrap{height:100%;display:grid;grid-template-rows:24px minmax(0,1fr);gap:6px}.output-head{display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-family:var(--mono);font-size:11px}.output-head b{color:var(--green)}
+    .workspace-footer{display:grid!important;grid-template-columns:auto minmax(0,1fr);font-size:clamp(8px,2.1vw,11px);min-width:0;gap:4px}.footer-left{flex:none}.footer-right{min-width:0;overflow-x:auto;scrollbar-width:none}.footer-right::-webkit-scrollbar{display:none}.footer-icon{width:13px;height:13px}.footer-pos,.footer-enc,.footer-lang{white-space:nowrap}
+    
+    .workspace-top{display:grid!important;grid-template-columns:minmax(0,1fr) 42px;align-items:center;gap:8px;overflow:hidden}.workspace-tabs{min-width:0!important;width:100%!important;max-width:100%!important;overflow-x:auto!important;overflow-y:hidden!important;white-space:nowrap!important;display:flex!important;flex-wrap:nowrap!important;padding-bottom:2px}.workspace-run{grid-column:2;width:38px!important;height:34px!important;display:grid!important;place-items:center!important;position:relative;z-index:8;box-shadow:0 0 18px rgba(86,255,213,.18)}.workspace-run svg{width:20px;height:20px}.tab{min-width:118px;max-width:168px}.tab-name{min-width:0}
+    @media (orientation:landscape) and (max-height:520px){.app{grid-template-rows:46px minmax(0,1fr)}.topbar{height:46px}.brand-sub{display:none}.sidebar{top:46px}.editor-pane{grid-template-rows:minmax(0,1fr) 78px}.console{font-size:11px;padding:7px 10px}}
+    @media (min-width:721px){.section-head .primary{margin-top:0}}
+    @media (max-width:720px){.runner-body{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) 150px}.runner-side{border-left:0;border-top:1px solid var(--line)}.runner-top{gap:6px;padding:0 8px}.runner-title{font-size:10px}.runner-meta{max-width:36vw}.top-actions .primary{display:none}.main,.main.nav-collapsed{grid-template-columns:1fr}.sidebar{position:absolute;z-index:10;top:58px;bottom:0;width:270px;transform:translateX(-104%);transition:.2s}.sidebar.open{transform:translateX(0)}.content{grid-column:1}.workspace-body{grid-template-columns:minmax(0,1fr)}.form,.cards,.feature-list,.check-grid{grid-template-columns:1fr}.section-head{display:block}.brand-sub{display:none}}
+  </style>
+</head>
+<body data-theme="dark">
+  <div class="app">
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle" aria-label="Open menu"><svg class="ui-icon" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      <div class="brand" aria-label="Valence">
+        <div>
+          <div class="brand-main"><img class="brand-mark" src="assets/valence-v.png" alt="V"><span>alence</span></div>
+          <div class="brand-sub">web technologies to native android application by NHZTech</div>
+        </div>
+      </div>
+      <div class="top-actions">
+        <div class="status-pill"><i class="status-dot"></i> OFFLINE FRONT-END</div>
+        <button class="primary" data-route="tools">Build APK</button>
+      </div>
+    </header>
+
+    <main class="main" id="mainShell">
+      <aside class="sidebar" id="sidebar">
+        <div class="workspace-hub" aria-label="Workspace hamburger tools">
+          <button class="hub-btn active" data-drawer-tool="menu" title="Menu"><svg class="ui-icon" viewBox="0 0 24 24"><path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/></svg></button>
+          <button class="hub-btn" data-drawer-tool="files" title="Files"><svg class="ui-icon" viewBox="0 0 24 24"><path d="M3 6.5h7l2 2h9v10.5H3z"/><path d="M3 10h18"/></svg></button>
+          <button class="hub-btn" data-drawer-tool="search" title="Search"><svg class="ui-icon" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button>
+          <button class="hub-btn" data-drawer-tool="terminal" title="Terminal"><svg class="ui-icon" viewBox="0 0 24 24"><path d="m4 7 5 5-5 5"/><path d="M12 17h8"/></svg></button>
+        </div>
+        <div class="drawer-panel" id="drawer-files">
+          <div class="drawer-title">Explorer</div>
+          <div class="tree" id="fileTree">
+            <div class="tree-folder open">
+              <button class="tree-row folder" data-folder-toggle aria-expanded="true">
+                <svg class="tree-caret" viewBox="0 0 24 24"><path d="m8 9 4 4 4-4"/></svg>
+                <svg class="tree-icon" viewBox="0 0 24 24"><path d="M3 6.5h7l2 2h9v10.5H3z"/><path d="M3 10h18"/></svg>
+                <span>public</span>
+              </button>
+              <div class="tree-children">
+                <button class="tree-row file active" data-drawer-file="index.html"><svg class="tree-icon" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5"/></svg><span>index.html</span></button>
+                <button class="tree-row file" data-drawer-file="styles.css"><svg class="tree-icon" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5"/></svg><span>styles.css</span></button>
+                <button class="tree-row file" data-drawer-file="app.js"><svg class="tree-icon" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5"/></svg><span>app.js</span></button>
+                <button class="tree-row file" data-drawer-file="main.py"><svg class="tree-icon" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5"/></svg><span>main.py</span></button>
+              </div>
+            </div>
+            <div class="tree-folder open">
+              <button class="tree-row folder" data-folder-toggle aria-expanded="true">
+                <svg class="tree-caret" viewBox="0 0 24 24"><path d="m8 9 4 4 4-4"/></svg>
+                <svg class="tree-icon" viewBox="0 0 24 24"><path d="M3 6.5h7l2 2h9v10.5H3z"/><path d="M3 10h18"/></svg>
+                <span>assets</span>
+              </button>
+              <div class="tree-children">
+                <button class="tree-row file" data-asset="valence-v.png"><svg class="tree-icon" viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="m4 15 4-4 4 4 2-2 6 6"/><circle cx="15" cy="9" r="1.5"/></svg><span>valence-v.png</span></button>
+                <button class="tree-row file" data-asset="valence-orb.png"><svg class="tree-icon" viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="m4 15 4-4 4 4 2-2 6 6"/><circle cx="15" cy="9" r="1.5"/></svg><span>valence-orb.png</span></button>
+              </div>
+            </div>
+            <div class="tree-folder">
+              <button class="tree-row folder" data-folder-toggle aria-expanded="false">
+                <svg class="tree-caret" viewBox="0 0 24 24"><path d="m8 9 4 4 4-4"/></svg>
+                <svg class="tree-icon" viewBox="0 0 24 24"><path d="M3 6.5h7l2 2h9v10.5H3z"/><path d="M3 10h18"/></svg>
+                <span>config</span>
+              </button>
+              <div class="tree-children">
+                <button class="tree-row file" data-drawer-file="manifest.json"><svg class="tree-icon" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5"/></svg><span>manifest.json</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="drawer-panel" id="drawer-search">
+          <div class="drawer-title">Search</div>
+          <input class="drawer-search" id="drawerSearchBox" placeholder="Search code or line..." value="hello">
+          <div id="drawerSearchResults"></div>
+        </div>
+        <div class="drawer-panel" id="drawer-terminal">
+          <div class="drawer-title">Virtual Terminal</div>
+          <div class="drawer-term" id="drawerTerminal">Valence virtual terminal\nType: help\n\n$ help\ncommands: help, clear, ls, echo, date, about, run</div>
+          <input class="drawer-term-input" id="drawerTermInput" placeholder="$ command">
+        </div>
+        <nav class="nav" aria-label="Hamburger menu items">
+          <button class="active" data-route="dashboard"><span class="nav-icon"><svg class="ui-icon" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-6h5v6"/></svg></span><span class="nav-text">Dashboard<small>Presents overview</small></span></button>
+          <button data-route="tools"><span class="nav-icon"><svg class="ui-icon" viewBox="0 0 24 24"><path d="M14.5 6.5 17 4l3 3-2.5 2.5"/><path d="m14 7 3 3"/><path d="M4 20l7.5-7.5"/><path d="M5 5l5 5"/><path d="m4 8 3-3 10 10-3 3Z"/></svg></span><span class="nav-text">Tools<small>Build APK lives here</small></span></button>
+          <button data-route="workspace"><span class="nav-icon"><svg class="ui-icon" viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h5"/><path d="M4 8h16"/></svg></span><span class="nav-text">Workspace<small>Code editor</small></span></button>
+          <button data-route="about"><span class="nav-icon"><svg class="ui-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.2v.1"/></svg></span><span class="nav-text">About Us<small>NHZTech story</small></span></button>
+          <button data-route="settings"><span class="nav-icon"><svg class="ui-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.1 2.1-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V20h-3v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1-2.1-2.1.1-.1A1.7 1.7 0 0 0 5 15a1.7 1.7 0 0 0-1.6-1H3v-3h.4A1.7 1.7 0 0 0 5 10a1.7 1.7 0 0 0-.3-1.9l-.1-.1 2.1-2.1.1.1A1.7 1.7 0 0 0 8.7 6a1.7 1.7 0 0 0 1-1.6V4h3v.4a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1 2.1 2.1-.1.1A1.7 1.7 0 0 0 19 10a1.7 1.7 0 0 0 1.6 1h.4v3h-.4a1.7 1.7 0 0 0-1.2 1Z"/></svg></span><span class="nav-text">Settings<small>Theme and editor</small></span></button>
+        </nav>
+        <div class="nav-hint">Project: Valence App<br>Files: 5<br>Encoding: UTF-8<br>Runtime: Web Preview</div>
+      </aside>
+
+      <section class="content">
+        <article class="page active" id="dashboard">
+          <div class="page-pad">
+            <div class="section-head">
+              <div><div class="eyebrow">Dashboard</div><h1>Project Overview</h1><p>Workspace data, project files, diagnostics, and runtime status.</p></div>
+              <button class="primary" data-route="workspace">Open Workspace</button>
+            </div>
+            <div class="grid cards">
+              <div class="panel metric"><b>05</b><span>Project files</span><div class="progress"><i style="width:55%"></i></div></div>
+              <div class="panel metric"><b>02</b><span>Asset files</span><div class="progress"><i style="width:40%"></i></div></div>
+              <div class="panel metric"><b>0</b><span>Current errors</span><div class="progress"><i style="width:2%"></i></div></div>
+              <div class="panel metric"><b>HTML</b><span>Active language</span><div class="progress"><i style="width:70%"></i></div></div>
+            </div>
+            <div class="grid two" style="margin-top:14px">
+              <div class="panel"><div class="panel-head">Project Files</div><div class="panel-body feature-list">
+                <div class="feature"><strong>public/index.html</strong><p>Main HTML entry file.</p></div>
+                <div class="feature"><strong>public/styles.css</strong><p>Stylesheet file.</p></div>
+                <div class="feature"><strong>public/app.js</strong><p>JavaScript file.</p></div>
+                <div class="feature"><strong>public/main.py</strong><p>Prepared runtime file.</p></div>
+                <div class="feature"><strong>config/manifest.json</strong><p>Application manifest.</p></div>
+                <div class="feature"><strong>assets/</strong><p>Image and icon resources.</p></div>
+              </div></div>
+              <div class="panel"><div class="panel-head">Status</div><div class="panel-body timeline">
+                <div><b>Workspace</b><span>Ready</span></div>
+                <div><b>Runner</b><span>HTML preview available</span></div>
+                <div><b>Diagnostics</b><span>Waiting for parser/compiler integration</span></div>
+              </div></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="page" id="tools">
+          <div class="page-pad">
+            <div class="section-head"><div><div class="eyebrow">Tools</div><h1>Build APK</h1></div></div>
+                        <div class="stage-bar" id="stageBar">
+              <button type="button" data-stage="upload" class="active">UPLOAD</button>
+              <button type="button" data-stage="config">CONFIG</button>
+              <button type="button" data-stage="output">OUTPUT</button>
+            </div>
+            <div class="stage" id="stage-upload">
+              <div class="panel" style="margin-bottom:14px"><div class="panel-head">Project Files</div><div class="panel-body">
+              <div class="src-bar" id="srcBar">
+                <button type="button" data-src="local" class="active">FILES</button>
+                <button type="button" data-src="link">LINK</button>
+                <button type="button" data-src="workspace">WORKSPACE</button>
+              </div>
+              <p class="note" id="stackLine" style="margin:0 0 10px;color:var(--dim)"></p>
+              <div id="src-local">
+              <div class="drop-zone" id="dropZone">
+                <svg class="dz-icon" viewBox="0 0 24 24"><path d="M12 16V4m0 0 4 4m-4-4-4 4"/><path d="M4 16v3a1.8 1.8 0 0 0 1.8 1.8h12.4A1.8 1.8 0 0 0 20 19v-3"/></svg>
+                <div id="dropZoneMsg"><b>Drop files, a folder, or a .zip</b><span>zips auto-unpack into buildable files</span></div>
+              </div>
+              <div class="import-actions">
+                <button id="pickFilesBtn">SELECT FILES</button>
+                <button id="pickFolderBtn">SELECT FOLDER</button>
+                <button id="clearImportsBtn">CLEAR IMPORTED</button>
+              </div>
+              <div class="import-list" id="importList"></div>
+              <input type="file" id="pickFiles" multiple hidden>
+              <input type="file" id="pickFolder" webkitdirectory hidden>
+            </div>
+              <div id="src-link" hidden>
+                <div class="field full"><label>Project link (site or repo)</label><input class="input" id="lkUrl" placeholder="https://their-site.com · github.com/o/r · gitlab.com/o/r · codeberg.org/o/r"></div>
+                <p class="note" id="provLine" style="margin:8px 0 0;display:none;align-items:center;gap:7px"><span id="provLogo" style="display:none;width:16px;height:16px;flex:none"></span><span id="provName"></span></p>
+                <button class="primary" id="lkLoad" style="display:none;margin-top:12px;width:100%">CLONE</button>
+                <p class="note" id="lkStatus" style="margin-top:8px"></p>
+              </div>
+              <div id="src-workspace" hidden>
+                <div class="import-actions"><button id="wsRefresh">REFRESH LIST</button><button id="wsSave">SAVE CURRENT PROJECT</button></div>
+                <div class="import-list" id="wsList"><div class="import-empty">loading…</div></div>
+                <p class="note" style="margin-top:8px">saved on this builder — every build auto-saves a copy here</p>
+              </div>
+              </div></div>
+            </div>
+            <div class="stage" id="stage-config" hidden>
+              <div class="panel" style="margin-bottom:14px;display:none" id="firebaseCard"><div class="panel-head"><span class="fb-head"><svg class="fb-flame" viewBox="0 0 24 24"><path d="M12 2c1.6 3.9-.7 5.7-1.9 7.3C8.7 11.2 8 12.9 8 14.5a4.5 4.5 0 0 0 9 0c0-2-.9-3.9-2.2-5.4C13.9 8 12.9 5.2 12 2z" fill="#ffa000"/><path d="M12 22a6.5 6.5 0 0 1-6.5-6.5c0-1.8.7-3.6 1.8-5.2.3 1 .9 1.9 1.7 2.7A4.5 4.5 0 0 0 12 22z" fill="#ff6f00" opacity=".85"/></svg><span id="fbTitle">Firebase Detected</span></span></div><div class="panel-body">
+              <p class="note"><b>Allow-list backends must authorize this domain</b> (Firebase authorized domains, Google OAuth origins, Appwrite, S3 CORS…):<br><code style="color:var(--cyan)">appassets.androidplatform.net</code><br>Own server (server.js)? its CORS must allow this domain or <code style="color:var(--cyan)">*</code>.</p>
+              <div class="field full" style="margin-top:12px"><label>Web Client ID (native account picker)</label><input class="input" id="bWebClientId" placeholder="1234…apps.googleusercontent.com — Firebase → Auth → Sign-in method → Google"></div>
+            </div></div>
+              <div class="panel" style="margin-bottom:14px"><div class="panel-head">APK Configuration</div><div class="panel-body">
+                <p class="note" id="groupLine" style="margin:0 0 8px;color:var(--green);font-weight:700">GROUP: WEB TECH → ANDROID APK</p>
+                <div class="src-bar" id="modeBar" style="margin-bottom:12px">
+                  <button type="button" data-mode="bundled" class="active">EMBEDDED</button>
+                  <button type="button" data-mode="live">LIVE</button>
+                  <button type="button" data-mode="hybrid">HYBRID</button>
+                  <button type="button" data-mode="native">NATIVE</button>
+                </div>
+                <div class="field full" id="liveUrlField" style="display:none;margin-bottom:12px"><label>Website URL</label><input class="input" id="bLiveUrl" placeholder="auto-filled by LINK"></div>
+                <div class="field full" id="nativeField" style="display:none;margin-bottom:12px"><label>Launcher activity class</label><input class="input" id="bNativeMain" placeholder="com.example.app.MainActivity (sources in java/ + res/)"></div>
+                <div class="form">
+                  <div class="field"><label>App Name</label><input class="input" id="bAppName" placeholder="My App"></div>
+                  <div class="field"><label>Package ID</label><div class="pkg-wrap"><span class="pkg-pre">com.</span><input class="input" id="bPackageId" placeholder="example.myapp"></div></div>
+                  <div class="field"><label>Version Name</label><input class="input" id="bVersionName" placeholder="1.0.0"><p class="note" id="verNote" style="display:none;margin:4px 0 0"></p></div>
+                  <div class="field"><label>Version Code</label><input class="input" id="bVersionCode" placeholder="1"></div>
+                  <div class="field"><label>Min Android Version</label><select id="bMinSdk"><option value="24">Android 7.0+</option><option value="26">Android 8.0+</option><option value="29">Android 10+</option></select></div>
+                  <div class="field"><label>App Icon</label><div class="icon-pick"><img id="iconPreview" alt="" hidden><button type="button" id="pickIconBtn">SELECT PNG</button><span id="iconStatus">auto-detects from project</span></div><input type="file" id="pickIcon" accept="image/png,image/webp,image/jpeg" hidden></div>
+                  <div class="field"><label>Build Server (auto)</label><input class="input" id="bEndpoint" value="/api/build" placeholder="auto — same localhost"></div>
+                  <div id="backendWrap" style="display:none">
+                    <p class="note" style="margin:0 0 8px">repo source — set the <b>deployed site</b> as Backend URL</p>
+                    <div class="field full"><label id="backendLabel">Backend URL (auto-detected)</label><input class="input" id="bBackend" placeholder="https://the-live-site.com"></div>
+                  </div>
+                </div>
+                <div class="check-grid">
+                  <label class="check"><input type="checkbox" id="bNet" checked> INTERNET</label>
+                  <label class="check"><input type="checkbox" class="bPerm" value="camera"> CAMERA</label>
+                  <label class="check"><input type="checkbox" class="bPerm" value="microphone"> MICROPHONE</label>
+                  <label class="check"><input type="checkbox" class="bPerm" value="location"> LOCATION</label>
+                  <label class="check"><input type="checkbox" class="bPerm" value="notifications"> NOTIFICATIONS</label>
+                </div>
+              </div></div>
+            </div>
+            <div class="stage" id="stage-output" hidden>
+              
+              <div class="panel gcard" style="margin-bottom:14px;display:none" id="gsetupCard"><div class="panel-head"><span class="g-head"><svg class="g-glyph" viewBox="0 0 48 48"><path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h11.8c-.5 2.8-2.1 5.1-4.4 6.7v5.6h7.1c4.2-3.8 6.6-9.5 6.6-16.3z"/><path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.3l-7.1-5.6c-2 1.3-4.5 2.1-7.4 2.1-5.7 0-10.6-3.9-12.3-9.1H4.4v5.8C8 41.1 15.4 46 24 46z"/><path fill="#FBBC05" d="M11.7 28.1c-.4-1.3-.7-2.7-.7-4.1s.3-2.8.7-4.1v-5.8H4.4C2.9 17.1 2 20.4 2 24s.9 6.9 2.4 9.9l7.3-5.8z"/><path fill="#EA4335" d="M24 10.8c3.2 0 6.1 1.1 8.4 3.3l6.3-6.3C34.9 4.2 29.9 2 24 2 15.4 2 8 6.9 4.4 14.1l7.3 5.8C13.4 14.7 18.3 10.8 24 10.8z"/></svg>Google Sign-In Setup</span><span class="g-right"><button type="button" class="mini-btn g-ic" id="gRefresh" title="refresh"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 11a8.5 8.5 0 1 0-2 6.5"/><path d="M20.5 4.5v6.5H14"/></svg></button></span></div><div class="panel-body">
+              <div class="g-row"><span class="g-key">Package</span><span class="g-val empty" id="gPackage">—</span><button type="button" class="mini-btn" data-gcopy="gPackage">COPY</button></div>
+              <div class="g-row"><span class="g-key">SHA-1</span><span class="g-val empty" id="gSha1">—</span><button type="button" class="mini-btn" data-gcopy="gSha1">COPY</button></div>
+            </div></div>
+              <div class="panel"><div class="panel-head">Build Console</div><div class="panel-body">
+<div class="terminal" id="buildLog">valence@studio: ready
+Waiting for build command...</div></div></div>
+            </div>
+            <div class="build-dock">
+              <button class="primary build-big" id="fakeBuild">Start Build APK</button>
+              <div class="dock-done" id="dockDone" style="display:none">
+                <button class="primary" id="apkDownload">DOWNLOAD APK</button>
+                <button class="primary dock-save" id="apkSave">SAVE</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="page workspace" id="workspace">
+          <div class="workspace-top">
+            <div class="workspace-tabs" id="workspaceTabs"><button class="tab active" draggable="true" data-tab-file="index.html">index.html</button><button class="tab" draggable="true" data-tab-file="styles.css">styles.css</button><button class="tab" draggable="true" data-tab-file="app.js">app.js</button></div>
+            <button class="workspace-run" id="refreshPreview" title="Run current file" aria-label="Run"><svg class="ui-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+          </div>
+          <div class="workspace-body" id="workspaceGrid">
+            <section class="editor-pane">
+              <div class="code-wrap"><pre class="gutter" id="gutter">1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16</pre><div class="editor-stack"><pre class="highlight-layer" id="highlightLayer" aria-hidden="true"></pre><textarea class="code" id="code" spellcheck="false" autocomplete="off" autocapitalize="off"><!doctype html>
+<html>
+  <head>
+    <title>Valence App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
+  </head>
+  <body>
+    <main class="screen">
+      <h1>Hello Valence</h1>
+      <p>Web technologies to native android application.</p>
+      <button>Launch</button>
+    </main>
+  </body>
+</html></textarea><div class="suggest-box" id="suggestBox"></div></div></div>
+              <div class="console" id="editorConsole">$ valence ready</div>
+            </section>
+          </div>
+          <footer class="workspace-footer"><div class="footer-left"><span class="diag error" title="Errors"><svg class="footer-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.5 8.5 7 7M15.5 8.5l-7 7"/></svg><b id="errorCount">0</b></span><span class="diag warning" title="Warnings"><svg class="footer-icon" viewBox="0 0 24 24"><path d="M12 3 22 20H2z"/><path d="M12 9v5"/><path d="M12 17.5v.1"/></svg><b id="warningCount">0</b></span></div><div class="footer-right"><span class="footer-pos">Ln <b id="lineNo">1</b></span><span class="footer-pos">Col <b id="colNo">1</b></span><span class="footer-enc">UTF-8</span><span class="footer-lang" id="languageMode">HTML</span></div></footer>
+        </article>
+
+        <article class="page runner-page" id="runner">
+          <div class="runner-top">
+            <button class="mini-btn" id="backToWorkspace">Back</button>
+            <div class="runner-title">Run Output</div>
+            <div class="runner-meta" id="runnerFileName">index.html</div>
+            <div class="runner-actions"><button id="rerunFile">Run Again</button></div>
+          </div>
+          <div class="runner-body">
+            <main class="runner-preview" id="runnerPreview">
+              <iframe class="runner-frame" id="runnerFrame" sandbox="allow-scripts"></iframe>
+            </main>
+            <aside class="runner-side">
+              <h3>Runtime Console</h3>
+              <div class="runner-log" id="runnerLog">Ready.</div>
+            </aside>
+          </div>
+        </article>
+
+        <article class="page" id="about">
+          <div class="page-pad">
+            <div class="section-head"><div><div class="eyebrow">About Us</div><h1>Valence by NHZTech</h1><p>Lorem ipsum content placeholder as requested.</p></div></div>
+            <div class="panel"><div class="panel-body about-copy">
+              <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Valence is imagined as a focused IDE for converting web technologies into native Android applications. Integer vitae sem vitae lorem pulvinar efficitur. Sed euismod, magna vel luctus placerat, tortor urna cursus mauris, at luctus neque nunc id nibh.</p>
+              <p>Praesent commodo, justo vel tristique porta, lectus augue elementum lorem, non sagittis ligula neque non mi. NHZTech builds simple, practical interfaces for creators who want clean tools, quick previews, and a smooth path from source code to installable mobile apps.</p>
+              <div class="badge-row"><span class="badge">Hybrid Android Runtime</span><span class="badge">WebView Ready</span><span class="badge">PWA Friendly</span><span class="badge">Sspan class="badge">Static UI Demo</span></div>
+            </div></div>
+          </div>
+        </article>
+
+        <article class="page" id="settings">
+          <div class="page-pad">
+            <div class="section-head"><div><div class="eyebrow">Settings</div><h1>IDE Preferences</h1><p>Theme, word wrap, font size, and other front-end editor options.</p></div></div>
+            <div class="grid two">
+              <div class="panel"><div class="panel-head">Appearance</div><div class="panel-body settings-list">
+                <div class="setting-row"><div><b>Light Theme</b><span>Switch between dark neon and clean light mode.</span></div><label class="switch"><input id="themeSwitch" type="checkbox"><i></i></label></div>
+                <div class="setting-row"><div><b>Compact Sidebar</b><span>Collapse labels and keep icons only.</span></div><label class="switch"><input id="compactSwitch" type="checkbox"><i></i></label></div>
+                <div class="setting-row"><div><b>Close Workspace Popover After File Open</b><span>Auto-close files/search/terminal popover after selecting a file.</span></div><label class="switch"><input id="autoCloseSwitch" type="checkbox"><i></i></label></div>
+              </div></div>
+              <div class="panel"><div class="panel-head">Editor</div><div class="panel-body settings-list">
+                <div class="setting-row"><div><b>Word Wrap</b><span>Wrap long lines inside the code editor.</span></div><label class="switch"><input id="wrapSwitch" type="checkbox"><i></i></label></div>
+                <div class="setting-row"><div><b>Auto Save</b><span>Save draft code to browser local storage.</span></div><label class="switch"><input id="saveSwitch" type="checkbox" checked><i></i></label></div>
+                <div class="setting-row"><div><b>Sound FX</b><span>synthesized futuristic UI audio — zero files</span></div><label class="switch"><input id="sfxSwitch" type="checkbox" checked><i></i></label></div>
+                <div class="setting-row"><div><b>SFX Volume</b><span>loudness of the synthesized audio</span></div><input type="range" id="sfxVol" min="0" max="100" style="width:130px;accent-color:var(--cyan)"></div>
+                <div class="field"><label>Editor Font Size</label><select id="fontSize"><option value="12px">12 px</option><option selected value="13px">13 px</option><option value="14px">14 px</option><option value="16px">16 px</option></select></div>
+                <div class="field"><label>Tab Size</label><select id="tabSize"><option>2</option><option>4</option><option>8</option></select></div>
+              </div></div>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+
+  </div>
+
+  <script>
+    const $ = (s, r=document) => r.querySelector(s);
+    const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+    const body = document.body;
+    const mainShell = $('#mainShell');
+    const sidebar = $('#sidebar');
+    const code = $('#code');
+    const gutter = $('#gutter');
+    const highlightLayer = $('#highlightLayer');
+    const suggestBox = $('#suggestBox');
+    
+
+    function showPage(route){
+      $$('.page').forEach(p => p.classList.toggle('active', p.id === route));
+      $$('[data-route]').forEach(b => b.classList.toggle('active', b.dataset.route === route));
+      sidebar.classList.toggle('workspace-context', route === 'workspace' || route === 'runner');
+      if(route === 'workspace') setDrawerTool('menu'); else sidebar.classList.remove('tool-mode');
+      sidebar.classList.remove('open');
+
+    }
+    $$('[data-route]').forEach(btn => btn.addEventListener('click', () => showPage(btn.dataset.route)));
+    $('#menuToggle').addEventListener('click', () => {
+      if(innerWidth <= 720) sidebar.classList.toggle('open');
+      else mainShell.classList.toggle('nav-collapsed');
+      $('#compactSwitch').checked = mainShell.classList.contains('nav-collapsed');
+    });
+
+    function updateGutter(){
+      const lines = code.value.split('\n').length;
+      gutter.textContent = Array.from({length: Math.max(lines,16)}, (_,i)=>i+1).join('\n');
+    }
+    function esc(v){return v.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+    function highlightCode(){
+      const mode = detectLanguage(currentFile());
+      const raw = esc(code.value);
+      if(mode === 'HTML'){
+        highlightLayer.innerHTML = raw.replace(/(&lt;!--[\s\S]*?--&gt;)|(&lt;\/?[a-zA-Z0-9-]+[\s\S]*?&gt;)/g, part => {
+          if(part.startsWith('&lt;!--')) return `<span class="tok-comment">${part}</span>`;
+          const match = part.match(/^(&lt;\/?)([a-zA-Z0-9-]+)([\s\S]*?)(&gt;)$/);
+          if(!match) return part;
+          const attrs = match[3]
+            .replace(/\s([a-zA-Z-:]+)(=)/g, ' <span class="tok-attr">$1</span>$2')
+            .replace(/(=&quot;.*?&quot;|='.*?')/g, '<span class="tok-string">$1</span>');
+          return `${match[1]}<span class="tok-tag">${match[2]}</span>${attrs}${match[4]}`;
+        }) + '\n';
+        return;
+      }
+      let v = raw;
+      if(mode === 'CSS'){
+        v = v.replace(/(\/\*[\s\S]*?\*\/)/g,'<span class="tok-comment">$1</span>')
+             .replace(/([.#]?[a-zA-Z_-][\w-]*)(\s*\{)/g,'<span class="tok-tag">$1</span>$2')
+             .replace(/([a-z-]+)(\s*:)/g,'<span class="tok-attr">$1</span>$2')
+             .replace(/(#(?:[0-9a-fA-F]{3}){1,2}|\b\d+(?:px|rem|em|%)?\b)/g,'<span class="tok-number">$1</span>');
+      } else {
+        v = v.replace(/(\/\/.*?$|#.*?$)/gm,'<span class="tok-comment">$1</span>')
+             .replace(/(&quot;.*?&quot;|'.*?'|`.*?`)/g,'<span class="tok-string">$1</span>')
+             .replace(/\b(const|let|var|function|return|if|else|for|while|class|import|export|from|def|print)\b/g,'<span class="tok-keyword">$1</span>')
+             .replace(/\b\d+\b/g,'<span class="tok-number">$&</span>');
+      }
+      highlightLayer.innerHTML = v + '\n';
+    }
+    function detectLanguage(file){
+      if(file.endsWith('.css')) return 'CSS';
+      if(file.endsWith('.js')) return 'JavaScript';
+      if(file.endsWith('.json')) return 'JSON';
+      if(file.endsWith('.py')) return 'Python';
+      if(file.endsWith('.md')) return 'Markdown';
+      return 'HTML';
+    }
+    function currentFile(){ return $('.tab.active')?.dataset.tabFile || 'index.html'; }
+    function updateStatus(){
+      const pos = code.selectionStart || 0;
+      const before = code.value.slice(0,pos);
+      const line = before.split('\n').length;
+      const col = before.length - before.lastIndexOf('\n');
+      $('#lineNo').textContent = line; $('#colNo').textContent = col;
+      const file = currentFile();
+      $('#languageMode').textContent = detectLanguage(file);
+      const openTags = (code.value.match(/<[^/!][^>]*>/g)||[]).length;
+      const closeTags = (code.value.match(/<\//g)||[]).length;
+      $('#errorCount').textContent = Math.max(0, closeTags > openTags ? closeTags-openTags : 0);
+      $('#warningCount').textContent = (code.value.match(/TODO|FIXME|console\.warn|deprecated/gi)||[]).length;
+    }
+    const suggestions = {
+      HTML:['html','head','body','main','section','div','h1','p','button','script','style','meta viewport','link rel="stylesheet"'],
+      CSS:['display: grid;','display: flex;','color:','background:','padding:','margin:','border-radius:','@media'],
+      JavaScript:['const','let','function','return','querySelector','addEventListener','console.log','localStorage'],
+      JSON:['"name"','"version"','"display"','"icons"'],
+      Python:['def','print()','import','class','if __name__ == "__main__":','for','while','return'],
+      Markdown:['# Heading','## Section','- list item','```code```']
+    };
+    function showSuggestions(){
+      const file = currentFile();
+      const mode = detectLanguage(file);
+      const pos = code.selectionStart || 0;
+      const token = (code.value.slice(0,pos).match(/[\w-:]*$/)||[''])[0].toLowerCase();
+      const list = (suggestions[mode]||suggestions.HTML).filter(x => x.toLowerCase().includes(token)).slice(0,6);
+      if(!list.length || token.length < 1){suggestBox.classList.remove('open'); return;}
+      suggestBox.innerHTML = list.map((x,i)=>`<button class="suggest-item ${i===0?'active':''}" data-suggestion="${esc(x)}"><span>${esc(x)}</span><small>${mode}</small></button>`).join('');
+      suggestBox.style.left = '14px'; suggestBox.style.top = '42px'; suggestBox.classList.add('open');
+    }
+    function applySuggestion(value){
+      const pos = code.selectionStart || 0;
+      const m = code.value.slice(0,pos).match(/[\w-:]*$/); const start = m ? pos - m[0].length : pos;
+      code.value = code.value.slice(0,start) + value + code.value.slice(pos);
+      code.setSelectionRange(start + value.length, start + value.length);
+      suggestBox.classList.remove('open'); updateAll(); code.focus();
+    }
+    function updateAll(){updateGutter(); highlightCode(); updateStatus();}
+    function updatePreview(){
+      const file = currentFile();
+      const mode = detectLanguage(file);
+      $('#runnerFileName').textContent = file + ' · ' + mode;
+      $('#runnerFrame').removeAttribute('srcdoc');
+      if(mode === 'HTML'){
+        const html = file.endsWith('.html') ? code.value : (fileContents['index.html'] || code.value);
+        $('#runnerPreview').innerHTML = '<iframe class="runner-frame" id="runnerFrame" sandbox="allow-scripts"></iframe>';
+        $('#runnerFrame').srcdoc = html;
+        $('#runnerLog').textContent = '$ valence run ' + file + '\n✓ HTML preview rendered in sandbox iframe.\n✓ Web runtime ready.';
+      } else {
+        $('#runnerPreview').innerHTML = `<div class="runner-placeholder"><div><b>${mode} runtime prepared</b><br><br>No interpreter/compiler is connected yet.<br>This page is ready for your future ${mode} runtime bridge, WASM compiler, Linux container, or backend executor.</div></div>`;
+        $('#runnerLog').textContent = '$ valence run ' + file + '\n! Interpreter/compiler slot prepared.\n! Connect runtime later for ' + mode + '.\n\nSource length: ' + code.value.length + ' characters';
+      }
+      showPage('runner');
+    }
+    code.addEventListener('input', () => { updateAll(); const f=currentFile(); fileContents[f]=code.value; renderSearch(); showSuggestions(); if($('#saveSwitch').checked && f==='index.html') localStorage.setItem('valence-code', code.value); });
+    code.addEventListener('scroll', () => { highlightLayer.scrollTop = code.scrollTop; highlightLayer.scrollLeft = code.scrollLeft; gutter.scrollTop = code.scrollTop; });
+    code.addEventListener('click', updateStatus);
+    code.addEventListener('keyup', e => { updateStatus(); if(!['ArrowUp','ArrowDown','Enter','Escape'].includes(e.key)) showSuggestions(); });
+    code.addEventListener('keydown', e => { if(e.key==='Escape') suggestBox.classList.remove('open'); if(e.key==='Tab' && suggestBox.classList.contains('open')){ e.preventDefault(); const active=suggestBox.querySelector('.active')||suggestBox.querySelector('[data-suggestion]'); if(active) applySuggestion(active.dataset.suggestion); } });
+    suggestBox.addEventListener('click', e => { const item=e.target.closest('[data-suggestion]'); if(item) applySuggestion(item.dataset.suggestion); });
+    $('#refreshPreview').addEventListener('click', updatePreview);
+    $('#rerunFile').addEventListener('click', updatePreview);
+    $('#backToWorkspace').addEventListener('click', () => showPage('workspace'));
+    const fileContents = {
+      'index.html': code.value,
+      'styles.css': 'body {\n  margin: 0;\n  background: #070913;\n  color: #eaf8ff;\n}\n.screen {\n  min-height: 100vh;\n  display: grid;\n  place-items: center;\n}',
+      'app.js': "const app = 'Valence';\nconsole.log('Hello ' + app);\nfunction launch(){\n  return 'native android application';\n}",
+      'main.py': 'print("Hello Valence")\nprint("Runtime bridge prepared")',
+      'manifest.json': '{\n  "name": "Valence App",\n  "short_name": "Valence",\n  "display": "standalone"\n}'
+    };
+    const cacheVersion = 'valence-cache-v3'; if(localStorage.getItem('valence-cache-version') !== cacheVersion){ localStorage.removeItem('valence-code'); localStorage.setItem('valence-cache-version', cacheVersion); } const savedCode = localStorage.getItem('valence-code'); if(savedCode && !/tok-(attr|tag|string|comment)/.test(savedCode)) { code.value = savedCode; fileContents['index.html'] = savedCode; } else if(savedCode) { localStorage.removeItem('valence-code'); }
+    let openFiles = ['index.html','styles.css','app.js'];
+    let activeFile = 'index.html';
+    function langIcon(file){
+      const mode = detectLanguage(file).toLowerCase();
+      const iconMap = {
+        html:'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/html5/html5-original.svg',
+        css:'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/css3/css3-original.svg',
+        javascript:'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/javascript/javascript-original.svg',
+        python:'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg',
+        json:'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/json/json-original.svg',
+        markdown:'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/markdown/markdown-original.svg'
+      };
+      const fallback = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect width="24" height="24" rx="5" fill="#28f3ff"/><path d="M7 7h10M7 12h10M7 17h6" stroke="#06101f" stroke-width="2" stroke-linecap="round"/></svg>');
+      const src = iconMap[mode] || fallback;
+      return `<img class="lang-icon" src="${src}" alt="${mode} icon" loading="lazy" onerror="this.src='${fallback}'">`;
+    }
+    function renderTabs(){
+      $('#workspaceTabs').innerHTML = openFiles.map(file => `<button class="tab ${file===activeFile?'active':''}" draggable="true" data-tab-file="${file}">${langIcon(file)}<span class="tab-name">${file}</span><span class="tab-close" data-close-tab="${file}" title="Close"><svg class="ui-icon" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7 7 17"/></svg></span></button>`).join('');
+      bindTabs();
+    }
+    function activateFile(file){
+      if(fileContents[file] === undefined) return;
+      activeFile = file;
+      $$('.tab').forEach(t => t.classList.toggle('active', t.dataset.tabFile === file));
+      code.value = fileContents[file]; updateAll(); renderSearch();
+      $$('.tree-row.file').forEach(r => r.classList.toggle('active', r.dataset.drawerFile === file));
+    }
+    function openFile(file){
+      if(fileContents[file] === undefined) return;
+      if(!openFiles.includes(file)) openFiles.push(file);
+      activeFile = file; renderTabs(); activateFile(file);
+      $('#editorConsole').textContent = '$ valence file\nopened ' + file;
+    }
+    function closeTab(file){
+      if(openFiles.length <= 1) return;
+      const idx = openFiles.indexOf(file);
+      openFiles = openFiles.filter(f => f !== file);
+      if(activeFile === file) activeFile = openFiles[Math.max(0, idx - 1)] || openFiles[0];
+      renderTabs(); activateFile(activeFile);
+    }
+    function moveTab(from, to){
+      if(!from || !to || from === to) return;
+      openFiles = openFiles.filter(f => f !== from);
+      openFiles.splice(openFiles.indexOf(to), 0, from);
+      renderTabs();
+    }
+    function bindTabs(){
+      let pointerDrag = null;
+      $$('.tab').forEach(tab => {
+        tab.addEventListener('click', e => { if(!e.target.closest('.tab-close')) activateFile(tab.dataset.tabFile); });
+        tab.querySelector('.tab-close')?.addEventListener('click', e => { e.stopPropagation(); closeTab(tab.dataset.tabFile); });
+        tab.addEventListener('dragstart', e => { tab.classList.add('dragging'); e.dataTransfer.setData('text/plain', tab.dataset.tabFile); });
+        tab.addEventListener('dragend', () => $$('.tab').forEach(t => t.classList.remove('dragging','drop-before')));
+        tab.addEventListener('dragover', e => { e.preventDefault(); tab.classList.add('drop-before'); });
+        tab.addEventListener('dragleave', () => tab.classList.remove('drop-before'));
+        tab.addEventListener('drop', e => { e.preventDefault(); moveTab(e.dataTransfer.getData('text/plain'), tab.dataset.tabFile); });
+        tab.addEventListener('pointerdown', e => { if(e.target.closest('.tab-close')) return; pointerDrag = {file:tab.dataset.tabFile, x:e.clientX, moved:false}; });
+        tab.addEventListener('pointermove', e => { if(pointerDrag && Math.abs(e.clientX-pointerDrag.x)>28) pointerDrag.moved=true; });
+        tab.addEventListener('pointerup', e => {
+          if(!pointerDrag || !pointerDrag.moved) { pointerDrag=null; return; }
+          const target = document.elementFromPoint(e.clientX, e.clientY)?.closest('.tab');
+          if(target && target !== tab) moveTab(pointerDrag.file, target.dataset.tabFile);
+          pointerDrag = null;
+        });
+      });
+    }
+    renderTabs(); updateAll();
+
+
+    function setDrawerTool(tool){
+      if(!sidebar.classList.contains('workspace-context')) return;
+      sidebar.classList.toggle('tool-mode', tool !== 'menu');
+      $$('[data-drawer-tool]').forEach(b => b.classList.toggle('active', b.dataset.drawerTool === tool));
+      $$('.drawer-panel').forEach(p => p.classList.toggle('active', p.id === 'drawer-' + tool));
+      if(tool === 'search') { renderSearch(); $('#drawerSearchBox').focus(); }
+      if(tool === 'terminal') $('#drawerTermInput').focus();
+    }
+    $$('[data-drawer-tool]').forEach(btn => btn.addEventListener('click', () => setDrawerTool(btn.dataset.drawerTool)));
+
+    function renderSearch(){
+      const q = $('#drawerSearchBox').value.trim();
+      const box = $('#drawerSearchResults');
+      if(!q){ box.innerHTML = '<div class="menu-card">Type a keyword or line number.</div>'; return; }
+      const lines = code.value.split('\n');
+      if(/^\d+$/.test(q)){
+        const n = Math.max(1, Math.min(lines.length, Number(q)));
+        box.innerHTML = `<button class="drawer-result" data-line="${n}"><b>${n}</b><span>${(lines[n-1]||'').replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}</span></button>`;
+      } else {
+        const hits = lines.map((line,i)=>({line,i:i+1})).filter(x => x.line.toLowerCase().includes(q.toLowerCase())).slice(0,50);
+        box.innerHTML = hits.length ? hits.map(x => `<button class="drawer-result" data-line="${x.i}"><b>${x.i}</b><span>${x.line.replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}</span></button>`).join('') : '<div class="menu-card">No results found.</div>';
+      }
+    }
+    $('#drawerSearchBox').addEventListener('input', renderSearch);
+    $('#drawerSearchResults').addEventListener('click', e => {
+      const item = e.target.closest('[data-line]'); if(!item) return;
+      const line = Number(item.dataset.line);
+      const pos = code.value.split('\n').slice(0,line-1).join('\n').length + (line > 1 ? 1 : 0);
+      code.focus(); code.setSelectionRange(pos, pos);
+      $('#editorConsole').textContent = '$ valence search\nselected line ' + line;
+    });
+    renderSearch();
+    $('#drawerTermInput').addEventListener('keydown', e => {
+      if(e.key !== 'Enter') return;
+      const input = e.target.value.trim();
+      const term = $('#drawerTerminal');
+      const cmd = input.split(' ')[0];
+      let out = '';
+      if(cmd === 'help') out = 'commands: help, clear, ls, echo, date, about';
+      else if(cmd === 'clear') { term.textContent = 'Valence virtual terminal'; e.target.value=''; return; }
+      else if(cmd === 'ls') out = 'index.html  styles.css  app.js  assets/  manifest.json';
+      else if(cmd === 'echo') out = input.slice(5);
+      else if(cmd === 'date') out = new Date().toLocaleString();
+      else if(cmd === 'about') out = 'Valence IDE front-end shell by NHZTech.';
+      else if(cmd === 'run') { updatePreview(); out = 'workspace run completed'; }
+      else out = input ? `unknown command: ${cmd}` : '';
+      term.textContent += `\n$ ${input}\n${out}`;
+      term.scrollTop = term.scrollHeight;
+      e.target.value = '';
+    });
+
+    /* ── PROJECT IMPORT: drag & drop + tap to browse ── */
+    const binaryFiles={}, importedPaths=new Set();
+    const DEMO_FILES=new Set(Object.keys(fileContents));
+    const TEXT_EXTS=new Set(['html','htm','css','js','mjs','cjs','json','md','txt','xml','svg','webmanifest','yml','yaml','toml','ts','jsx','tsx','py','vue','svelte','map','csv','ini','conf','properties','sh','kt','kts','java','gradle','cart']);
+    const isTextName=n=>TEXT_EXTS.has((n.split('.').pop()||'').toLowerCase());
+    const fmtSize=n=>n<1024?n+' B':n<1048576?(n/1024).toFixed(1)+' KB':(n/1048576).toFixed(2)+' MB';
+    const escA=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+    function detectWebRoot(paths){
+      for(const c of ['public','dist','build','out','www','wwwroot','html','web']) if(paths.has(c+'/index.html'))return c;
+      return paths.has('index.html')?'':null;
+    }
+    function normalizeWebRoot(){
+      const wr=detectWebRoot(importedPaths);
+      if(!wr||wr==='public')return;
+      const pre=wr+'/';
+      for(const p of [...importedPaths]){
+        if(!p.startsWith(pre))continue;
+        const np=p.slice(pre.length);
+        if(binaryFiles[p]!==undefined){binaryFiles[np]=binaryFiles[p];delete binaryFiles[p];}
+        else if(fileContents[p]!==undefined){fileContents[np]=fileContents[p];delete fileContents[p];}
+        importedPaths.delete(p);importedPaths.add(np);
+      }
+      renderImportList();renderImportedTree();
+    }
+    var fwkList=[],fwkAdvisory='';
+    function detectGroup(){
+      const paths=[...importedPaths];
+      if(paths.some(p=>/^java\/.*\.(kt|java)$/.test(p)))return 'native';
+      if(paths.some(p=>p.endsWith('.kt')))return 'native';
+      if(paths.some(p=>/(^|\/)(AndroidManifest\.xml|build\.gradle(\.kts)?)$/.test(p)))return 'native';
+      if(paths.some(p=>p.endsWith('.java')&&/Activity|AppCompatActivity|Service|BroadcastReceiver/.test(fileContents[p]||'')))return 'native';
+      return 'web';
+    }
+    function detectMainActivity(){
+      for(const p of [...importedPaths]){
+        if(!/\.(kt|java)$/.test(p))continue;
+        const t=fileContents[p]||'';
+        const pkg=(t.match(/package\s+([\w.]+)/)||[])[1]||'';
+        const cls=(t.match(/class\s+(\w+)\s*(?::\s*AppCompatActivity|extends\s+AppCompatActivity|:\s*Activity\b|extends\s+Activity\b)/)||[])[1];
+        if(cls)return pkg?pkg+'.'+cls:cls;
+      }
+      return '';
+    }
+    function applyGroup(){
+      const g=detectGroup();
+      const gl=$('#groupLine');
+      if(gl)gl.textContent=g==='native'?'GROUP: NATIVE/MOBILE TECH → ANDROID APK':'GROUP: WEB TECH → ANDROID APK';
+      $$('#modeBar [data-mode]').forEach(btn=>{
+        const m=btn.dataset.mode;
+        const lock=(g==='native')?(m!=='native'):(m==='native');
+        btn.classList.toggle('locked',lock);
+        btn.disabled=lock;
+      });
+      if(g==='native'){
+        setMode('native');
+        const ma=detectMainActivity();
+        if(ma&&$('#bNativeMain')&&!$('#bNativeMain').value)$('#bNativeMain').value=ma;
+      }else{
+        setMode((($('#bLiveUrl')||{}).value||'').trim()?'live':'bundled');
+      }
+      return g;
+    }
+    function renderImportList(){
+      const box=$('#importList');
+      const rows=[...importedPaths].sort();
+      if(!rows.length){box.innerHTML='<div class="import-empty">No files imported yet — the demo workspace files will be used for the build.</div>';return;}
+      box.innerHTML=rows.map(p=>{
+        const bin=binaryFiles[p]!==undefined;
+        const size=bin?binaryFiles[p].length:new Blob([fileContents[p]||'']).size;
+        return `<div class="import-row"><span class="import-name" data-import-open="${escA(p)}">${escA(p)}</span><span class="import-meta">${bin?'binary':'text'} · ${fmtSize(size)}</span><button class="import-x" data-import-remove="${escA(p)}" title="Remove">✕</button></div>`;
+      }).join('');
+    }
+    function renderImportedTree(){
+      let host=$('#importedTreeFolder');
+      const rows=[...importedPaths].sort();
+      if(!rows.length){if(host)host.remove();return;}
+      if(!host){
+        host=document.createElement('div');
+        host.className='tree-folder open';host.id='importedTreeFolder';
+        host.innerHTML='<button class="tree-row folder" id="importedToggle"><svg class="tree-caret" viewBox="0 0 24 24"><path d="m8 9 4 4 4-4"/></svg><svg class="tree-icon" viewBox="0 0 24 24"><path d="M3 6.5h7l2 2h9v10.5H3z"/><path d="M3 10h18"/></svg><span>imported</span></button><div class="tree-children" id="importedChildren"></div>';
+        $('#fileTree').prepend(host);
+        $('#importedToggle').addEventListener('click',()=>host.classList.toggle('open'));
+      }
+      $('#importedChildren').innerHTML=rows.map(p=>{
+        const bin=binaryFiles[p]!==undefined;
+        const icon=bin?'<svg class="tree-icon" viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="m4 15 4-4 4 4 2-2 6 6"/><circle cx="15" cy="9" r="1.5"/></svg>':'<svg class="tree-icon" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5"/></svg>';
+        return `<button class="tree-row file" data-import-file="${escA(p)}" data-drawer-file="${escA(p)}">${icon}<span>${escA(p)}</span></button>`;
+      }).join('');
+    }
+    $('#fileTree').addEventListener('click',e=>{
+      const row=e.target.closest('[data-import-file]');
+      if(!row)return;
+      const p=row.dataset.importFile;
+      if(binaryFiles[p]!==undefined){$('#editorConsole').textContent='$ valence file\n'+p+' is a binary file ('+fmtSize(binaryFiles[p].length)+') — it will be packed into the APK.';return;}
+      openFile(p);
+      if($('#autoCloseSwitch').checked)setDrawerTool('menu');
+    });
+    $('#importList').addEventListener('click',e=>{
+      const rm=e.target.closest('[data-import-remove]');
+      if(rm){
+        const p=rm.dataset.importRemove;
+        importedPaths.delete(p);delete binaryFiles[p];
+        if(fileContents[p]!==undefined&&!DEMO_FILES.has(p))delete fileContents[p];
+        if(openFiles.includes(p)&&openFiles.length>1)closeTab(p);
+        renderImportList();renderImportedTree();schedulePersist();return;
+      }
+      const op=e.target.closest('[data-import-open]');
+      if(op&&fileContents[op.dataset.importOpen]!==undefined){openFile(op.dataset.importOpen);showPage('workspace');}
+    });
+    async function ingest(list,fromArchive=false){
+      let clean=list.filter(x=>x.path&&!/(^|\/)\.(git|DS_Store|firebase)/.test(x.path));
+      if(!clean.length)return;
+      if(!fromArchive){
+        const archives=clean.filter(x=>/\.(apk|zip)$/i.test(x.path));
+        for(const a of archives)await importArchive(a.file,a.path);
+        clean=clean.filter(x=>!/\.(apk|zip)$/i.test(x.path));
+        if(!clean.length){postImportHooks();return;}
+      }
+      const parts=clean.map(x=>x.path);
+      const root=parts[0].includes('/')?parts[0].split('/')[0]:null;
+      const cut=(root&&parts.every(p=>p.startsWith(root+'/')))?root.length+1:0;
+      let text=0,bin=0,skipped=0;
+      for(const {path,file} of clean){
+        const p=path.slice(cut).replace(/^\/+/,'');
+        if(!p)continue;
+        if(file.size>15*1024*1024){skipped++;continue;}
+        if(isTextName(p)){fileContents[p]=await file.text();delete binaryFiles[p];text++;}
+        else{binaryFiles[p]=new Uint8Array(await file.arrayBuffer());bin++;}
+        importedPaths.add(p);
+      }
+      normalizeWebRoot();
+      renderImportList();renderImportedTree();
+      const dz=$('#dropZone');dz.classList.add('done');
+      $('#dropZoneMsg').innerHTML='<b>'+importedPaths.size+' files ready to build</b><span>'+text+' text · '+bin+' binary imported'+(skipped?' · '+skipped+' skipped (>15 MB)':'')+' — drop more anytime</span>';
+      const entry=['index.html','public/index.html'].find(x=>importedPaths.has(x));
+      if(entry)openFile(entry);
+      postImportHooks();
+    }
+    /* ── APK / ZIP UNPACKER ── */
+    async function unzipRead(buf){
+      const dv=new DataView(buf.buffer,buf.byteOffset,buf.byteLength);
+      let eocd=-1;
+      for(let i=buf.length-22;i>=Math.max(0,buf.length-65557);i--){if(dv.getUint32(i,true)===0x06054b50){eocd=i;break;}}
+      if(eocd<0)throw new Error('not a valid ZIP/APK');
+      const count=dv.getUint16(eocd+10,true);
+      let off=dv.getUint32(eocd+16,true);
+      const dec=new TextDecoder(),out=[];
+      for(let i=0;i<count;i++){
+        if(dv.getUint32(off,true)!==0x02014b50)throw new Error('bad central directory');
+        const method=dv.getUint16(off+10,true),csize=dv.getUint32(off+20,true);
+        const nlen=dv.getUint16(off+28,true),elen=dv.getUint16(off+30,true),clen=dv.getUint16(off+32,true);
+        const lho=dv.getUint32(off+42,true);
+        const name=dec.decode(buf.subarray(off+46,off+46+nlen));
+        off+=46+nlen+elen+clen;
+        if(name.endsWith('/'))continue;
+        const lnlen=dv.getUint16(lho+26,true),lelen=dv.getUint16(lho+28,true);
+        const start=lho+30+lnlen+lelen;
+        let data=buf.subarray(start,start+csize);
+        if(method===8){
+          const stream=new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+          data=new Uint8Array(await new Response(stream).arrayBuffer());
+        }else if(method!==0)continue;
+        out.push({name,data});
+      }
+      return out;
+    }
+    function applyConfigToForm(cfg){
+      if(!cfg||typeof cfg!=='object')return;
+      if(cfg.name)$('#bAppName').value=cfg.name;
+      if(cfg.id)$('#bPackageId').value=String(cfg.id).replace(/^com\./,'');
+      if(cfg.version)$('#bVersionName').value=cfg.version;
+      if(cfg.versionCode)$('#bVersionCode').value=cfg.versionCode;
+      const min=(cfg.android&&cfg.android.minSdk)||24;
+      const sel=$('#bMinSdk');
+      sel.value=[...sel.options].some(o=>+o.value===min)?String(min):'24';
+      $('#bNet').checked=cfg.network?cfg.network.enabled!==false:true;
+      if($('#bBackend'))$('#bBackend').value=(cfg.network&&cfg.network.backend)||'';
+      if(cfg.mode&&cfg.mode!=='bundled'){const mb2=$('#modeBar [data-mode="'+cfg.mode+'"]');if(mb2)mb2.click();if($('#bLiveUrl'))$('#bLiveUrl').value=cfg.liveUrl||'';if(cfg.native&&$('#bNativeMain'))$('#bNativeMain').value=cfg.native.mainActivity||'';}
+      $$('.bPerm').forEach(c=>c.checked=(cfg.permissions||[]).includes(c.value));
+      if(cfg.google&&cfg.google.webClientId){$('#bWebClientId').value=cfg.google.webClientId;firebaseDetected=true;showGCard();}
+      refreshBuildBtn();
+    }
+    async function importEntries(entries,label){
+      const asFiles=list=>list.map(e=>({path:e.name,file:new File([e.data],e.name.split('/').pop())}));
+      const cfgE=entries.find(e=>e.name==='assets/valence.json')||entries.find(e=>e.name==='assets/cartridge.json');
+      let vbEntry='public/index.html';
+      if(cfgE){try{const vc=JSON.parse(new TextDecoder().decode(cfgE.data));if(vc&&vc.entry)vbEntry=vc.entry;applyConfigToForm(vc);}catch{}}
+      if(entries.some(e=>e.name==='assets/'+vbEntry)){
+        /* Valence-built APK → full round trip, original structure preserved */
+        const files=entries.filter(e=>e.name.startsWith('assets/')&&e.name!=='assets/valence.json'&&e.name!=='assets/cartridge.json'&&!/\/valence\.js$/.test(e.name))
+          .map(e=>({path:e.name.slice(7),file:new File([e.data],e.name.split('/').pop())}));
+        await ingest(files,true);
+        $('#dropZoneMsg').innerHTML='<b>✓ Valence APK unpacked: '+escA(label)+'</b><span>'+files.length+' files restored · structure preserved</span>';
+      }else if(entries.some(e=>e.name==='public/index.html'||e.name==='index.html'||e.name==='valence.json')){
+        /* project ZIP */
+        const cfgE=entries.find(e=>e.name==='valence.json');
+        if(cfgE){try{applyConfigToForm(JSON.parse(new TextDecoder().decode(cfgE.data)));}catch{}}
+        const files=entries.filter(e=>e.name!=='valence.json');
+        await ingest(asFiles(files),true);
+        $('#dropZoneMsg').innerHTML='<b>✓ Project ZIP unpacked: '+escA(label)+'</b><span>'+files.length+' files imported</span>';
+      }else if(entries.some(e=>/(^|\/)settings\.gradle(\.kts)?$/.test(e.name))||(entries.some(e=>/AndroidManifest\.xml$/.test(e.name))&&entries.some(e=>/(^|\/)build\.gradle(\.kts)?$/.test(e.name)))){
+        /* complete Android/Gradle project → import for own-gradle build */
+        const files=entries.filter(e=>!e.name.endsWith('/'));
+        await ingest(asFiles(files),true);
+        $('#dropZoneMsg').innerHTML='<b>✓ Android project imported: '+escA(label)+'</b><span>'+files.length+' files — NATIVE group, builds with its own Gradle</span>';
+      }else{
+        /* foreign APK/ZIP → inspect only, with an explanation of what it is */
+        const total=entries.reduce((s2,e)=>s2+e.data.length,0);
+        const names=entries.map(e=>e.name);
+        const hasGradle=names.some(n=>/(^|\/)(settings\.gradle(\.kts)?|build\.gradle(\.kts)?)$/.test(n));
+        const hasManifest=names.some(n=>/AndroidManifest\.xml$/.test(n));
+        const hasCpp=names.some(n=>/\.(c|cc|cpp)$/.test(n)||/CMakeLists\.txt$/.test(n));
+        const hasKt=names.some(n=>/\.kt$/.test(n));
+        window.__vZipKind=(hasGradle&&hasManifest)?'android':(hasKt||hasCpp)?'code':'other';
+        $('#editorConsole').textContent='$ valence unpack '+label+'\n'+entries.length+' entries · '+fmtSize(total)+' unpacked\n\n'+entries.slice(0,80).map(e=>'  '+e.name+'  ('+fmtSize(e.data.length)+')').join('\n')+(entries.length>80?'\n  … '+(entries.length-80)+' more':'')+'\n\n! Not built with Valence — files listed only (see Workspace console).';
+        let why='Not a Valence package, nothing imported.';
+        if(window.__vZipKind==='android')why='Complete Android project detected (own Gradle'+(hasCpp?' + C/NDK':'')+') — Valence transforms web tech or source-style Kotlin/Java (java/ + res/); projects that bring their own Gradle'+(hasCpp?' — especially C/NDK, a desktop toolchain —':'')+' compile on a desktop, they are not transformed.';
+        else if(window.__vZipKind==='code')why='Raw '+((hasKt&&hasCpp)?'Kotlin + C':hasKt?'Kotlin':'C')+' sources without a Valence layout — put Kotlin/Java under java/ (+ res/) for NATIVE mode, or upload built web output.';
+        $('#dropZoneMsg').innerHTML='<b>Inspected '+escA(label)+'</b><span>'+entries.length+' entries — '+why+'</span>';
+      }
+    }
+    async function importArchive(file,label){
+      let entries;
+      try{entries=await unzipRead(new Uint8Array(await file.arrayBuffer()));}
+      catch(err){$('#dropZoneMsg').innerHTML='<b>✗ '+escA(label)+'</b><span>'+escA(err.message)+'</span>';return;}
+      await importEntries(entries,label);
+    }
+    /* ── VALENCE SFX v2 — enhanced synth + master volume ── */
+    const SFX=(()=>{
+      let ctx=null,enabled=localStorage.getItem('valence-sfx')!=='0';
+      let vol=Number(localStorage.getItem('valence-sfx-vol'));if(!(vol>=0))vol=0.6;
+      const ac=()=>{if(!ctx){try{ctx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(ctx&&ctx.state==='suspended')ctx.resume();return ctx;};
+      function tone(f0,f1,dur,type,v,delay){const c=ac();if(!c||!enabled)return;v*=vol;if(v<=0)return;const t=c.currentTime+(delay||0);const o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.setValueAtTime(f0,t);if(f1)o.frequency.exponentialRampToValueAtTime(Math.max(1,f1),t+dur);g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(v,t+0.012);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+dur+0.05);}
+      function sweep(dur,v,f,q){const c=ac();if(!c||!enabled)return;v*=vol;if(v<=0)return;const t=c.currentTime;const n=c.createBufferSource();const b=c.createBuffer(1,Math.max(1,c.sampleRate*dur|0),c.sampleRate);const d=b.getChannelData(0);for(let x=0;x<d.length;x++)d[x]=Math.random()*2-1;n.buffer=b;const fl=c.createBiquadFilter();fl.type='bandpass';fl.Q.value=q||1.4;fl.frequency.setValueAtTime(f,t);fl.frequency.exponentialRampToValueAtTime(f*3.4,t+dur);const g=c.createGain();g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);n.connect(fl);fl.connect(g);g.connect(c.destination);n.start(t);}
+      return{
+        get enabled(){return enabled;},
+        set enabled(v){enabled=!!v;localStorage.setItem('valence-sfx',v?'1':'0');},
+        get volume(){return vol;},
+        set volume(v){vol=Math.min(1,Math.max(0,v));localStorage.setItem('valence-sfx-vol',String(vol));},
+        tap(){tone(1600,1000,0.05,'triangle',0.05);tone(2600,1900,0.035,'sine',0.022,0.012);},
+        stage(){sweep(0.16,0.05,800);tone(320,980,0.14,'sine',0.04);tone(1560,0,0.05,'triangle',0.02,0.1);},
+        build(){tone(90,480,0.5,'sawtooth',0.05);tone(45,240,0.5,'square',0.03);sweep(0.5,0.03,260,1.1);tone(1200,2600,0.18,'sine',0.025,0.34);},
+        ok(){[523,659,784,1046].forEach((f,x)=>tone(f,0,0.09,'sine',0.05,x*0.075));tone(2093,0,0.14,'triangle',0.025,0.3);tone(3136,0,0.1,'sine',0.015,0.36);},
+        err(){tone(200,90,0.24,'sawtooth',0.055);tone(150,70,0.3,'square',0.035,0.03);sweep(0.25,0.03,180,0.8);},
+        data(){for(let x=0;x<8;x++)tone(700+((x*577)%1600),0,0.032,'square',0.026,x*0.03);}
+      };
+    })();
+    const sfxSw=$('#sfxSwitch');if(sfxSw){sfxSw.checked=SFX.enabled;sfxSw.addEventListener('change',()=>{SFX.enabled=sfxSw.checked;if(sfxSw.checked)SFX.ok();});}
+    const sfxVol=$('#sfxVol');if(sfxVol){sfxVol.value=Math.round(SFX.volume*100);sfxVol.addEventListener('input',()=>{SFX.volume=Number(sfxVol.value)/100;});}
+    /* ── STAGES & UPLOAD SOURCES ── */
+    const STAGE_HINT={upload:'UPLOAD — bring your web project in.',config:'CONFIG — shape it into an app.',output:'OUTPUT — forge & ship the APK.'};
+    $$('#stageBar [data-stage]').forEach(btn=>btn.addEventListener('click',()=>{
+      SFX.stage();
+      $$('#stageBar [data-stage]').forEach(x=>x.classList.toggle('active',x===btn));
+      const st=btn.dataset.stage;
+      ['upload','config','output'].forEach(k=>{$('#stage-'+k).hidden=(k!==st);});
+    }));
+    $$('#srcBar [data-src]').forEach(btn=>btn.addEventListener('click',()=>{
+      SFX.stage();
+      $$('#srcBar [data-src]').forEach(x=>x.classList.toggle('active',x===btn));
+      const k=btn.dataset.src;
+      ['local','link','workspace'].forEach(x=>{$('#src-'+x).hidden=(x!==k);});
+      if(k==='workspace')wsLoadList();
+    }));
+    /* github source */
+    const PROV={
+      github:{re:/github\.com\/([^/]+)\/([^/?#]+)/,svg:'<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.9 10.9c.6.1.8-.2.8-.6v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.4 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.4-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11 11 0 0 1 5.8 0c2.2-1.5 3.2-1.2 3.2-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.2c0 .4.2.7.8.6A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5z"/></svg>',label:'GitHub — clone repo source'},
+      gitlab:{re:/gitlab\.com\/([^/]+)\/([^/?#]+)/,svg:'<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="m12 21.5-9.2-6.8c-.4-.3-.6-.9-.4-1.4L5 5.6c.2-.5.9-.5 1.1 0l1.7 5.2h8.4l1.7-5.2c.2-.5.9-.5 1.1 0l2.6 7.7c.2.5 0 1.1-.4 1.4z"/></svg>',label:'GitLab — clone repo source'},
+      codeberg:{re:/codeberg\.org\/([^/]+)\/([^/?#]+)/,svg:'<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M3 17 9 7l3 5 2-3 7 8z"/></svg>',label:'Codeberg — clone repo source'}
+    };
+    function detectProv(v){for(const[k,p]of Object.entries(PROV)){const m=p.re.exec(v);if(m)return{k,m};}return null;}
+    let lkTimer=null,lastPulled='';
+    $('#lkUrl').addEventListener('input',()=>{
+      const v=($('#lkUrl').value||'').trim();const d=detectProv(v);
+      const lg=$('#provLogo'),nm=$('#provName'),pl=$('#provLine'),btn=$('#lkLoad');
+      if(d){pl.style.display='flex';lg.style.display='';lg.innerHTML=PROV[d.k].svg;nm.textContent=PROV[d.k].label+' · '+d.m[1]+'/'+d.m[2];btn.style.display='';btn.textContent='CLONE';}
+      else{pl.style.display='none';btn.style.display='none';}
+      clearTimeout(lkTimer);
+      if(!d&&/^(https?:\/\/)?[^\s\/]+\.[^\s\/]{2,}/i.test(v)&&v!==lastPulled)lkTimer=setTimeout(doPull,900);
+    });
+    $('#lkUrl').addEventListener('keydown',e=>{if(e.key==='Enter')doPull();});
+    async function doPull(){
+      let v=($('#lkUrl').value||'').trim();
+      if(v&&!/^https?:\/\//i.test(v)&&!detectProv(v))v='https://'+v;
+      $('#lkUrl').value=v;
+      lastPulled=v;
+      const st=$('#lkStatus');
+      if(!v){st.textContent='✗ paste a link';return;}
+      const base=(($('#bEndpoint').value||'').trim()||'/api/build').replace(/\/build\/?$/,'');
+      const d=detectProv(v);
+      st.textContent=d?'→ cloning from '+d.k+'…':'→ pulling site…';
+      try{
+        const r=d
+          ?await fetch(base+'/clone',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({provider:d.k,repo:d.m[1]+'/'+d.m[2]})})
+          :await fetch(base+'/crawl',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:v})});
+        const j=await r.json();
+        if(!r.ok)throw new Error(j.error||('HTTP '+r.status));
+        fromProvider=!!d;updateDeploy();
+        await loadFilesMap(j.files,d?d.m[1]+'/'+d.m[2]:new URL(j.origin).host);
+        if(!d){$('#bBackend').value=j.origin;setMode('live');if($('#bLiveUrl'))$('#bLiveUrl').value=j.origin;}
+        SFX.data();SFX.ok();
+        st.textContent=d?'✓ cloned source from '+d.k:'✓ pulled — backend auto-set: '+j.origin;
+      }catch(err){SFX.err();st.textContent='✗ '+err.message;}
+    }
+    $('#lkLoad').addEventListener('click',doPull);
+    async function loadFilesMap(files,label){
+      $('#clearImportsBtn').click();
+      let n=0;
+      for(const[path,rec]of Object.entries(files||{})){
+        if(rec.b64){let bs=atob(rec.b64);const u8=new Uint8Array(bs.length);for(let i=0;i<bs.length;i++)u8[i]=bs.charCodeAt(i);binaryFiles[path]=u8;}
+        else fileContents[path]=rec.text??'';
+        importedPaths.add(path);n++;
+      }
+      renderImportList();renderImportedTree();
+      $('#dropZone').classList.add('done');
+      $('#dropZoneMsg').innerHTML='<b>✓ '+escA(label)+' loaded</b><span>'+n+' files ready to build</span>';
+      const entry=['index.html','public/index.html'].find(x=>importedPaths.has(x));
+      if(entry)openFile(entry);
+      normalizeWebRoot();
+      postImportHooks();
+      return n;
+    }
+    /* workspace source (builder-saved projects) */
+    async function wsLoadList(){
+      const el=$('#wsList');el.innerHTML='<div class="import-empty">loading…</div>';
+      try{
+        const r=await fetch('/api/workspace');const j=await r.json();
+        const ps=j.projects||[];
+        if(!ps.length){el.innerHTML='<div class="import-empty">no saved projects yet — build once or SAVE CURRENT PROJECT</div>';return;}
+        el.innerHTML=ps.map(pr=>'<div class="import-row"><span class="import-name">'+escA(pr.name)+'</span><span class="import-meta">'+pr.count+' files</span><button class="mini-btn" data-ws-open="'+escA(pr.name)+'">OPEN</button></div>').join('');
+      }catch{el.innerHTML='<div class="import-empty">builder offline — start Studio with sh START-STUDIO.sh</div>';}
+    }
+    $('#wsRefresh').addEventListener('click',wsLoadList);
+    $('#wsList').addEventListener('click',async e=>{
+      const btn=e.target.closest('[data-ws-open]');if(!btn)return;
+      const name=btn.dataset.wsOpen;btn.textContent='…';
+      try{
+        const r=await fetch('/api/workspace/'+encodeURIComponent(name));
+        if(!r.ok)throw new Error('HTTP '+r.status);
+        const j=await r.json();
+        await loadFilesMap(j.files,name);
+      }catch(err){$('#wsList').innerHTML='<div class="import-empty">✗ '+escA(err.message)+'</div>';}
+      btn.textContent='OPEN';
+    });
+    $('#wsSave').addEventListener('click',async()=>{
+      const name=($('#bAppName').value||'project').trim();
+      const files={};
+      for(const path of importedPaths){
+        if(binaryFiles[path]!==undefined){
+          const u8=binaryFiles[path];let str='';
+          for(let i=0;i<u8.length;i+=8192)str+=String.fromCharCode(...u8.subarray(i,i+8192));
+          files[path]={b64:btoa(str)};
+        }else files[path]={text:fileContents[path]??''};
+      }
+      try{
+        const r=await fetch('/api/workspace/'+encodeURIComponent(name),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({files})});
+        const j=await r.json();
+        if(!r.ok)throw new Error(j.error||'save failed');
+        wsLoadList();
+      }catch(err){$('#wsList').innerHTML='<div class="import-empty">✗ '+escA(err.message)+'</div>';}
+    });
+    /* ── APP ICON ── */
+    let appIcon=null;
+    function setAppIcon(bytes,name,how){
+      appIcon=bytes;
+      const img=$('#iconPreview');
+      img.src=URL.createObjectURL(new Blob([bytes]));
+      img.hidden=false;
+      $('#iconStatus').textContent=name+' · '+how;
+    }
+    $('#pickIconBtn').addEventListener('click',()=>$('#pickIcon').click());
+    $('#pickIcon').addEventListener('change',async e=>{
+      const f=e.target.files[0];
+      if(f){setAppIcon(new Uint8Array(await f.arrayBuffer()),f.name,'manual');schedulePersist();}
+      e.target.value='';
+    });
+    /* ── FIREBASE DETECTION ── */
+    function scanStack(){
+      const tags=new Set();let backend='';let login=false;let provAuth='';const ev=new Set(),ep=new Set(),st=new Set(),snd=new Set();
+      const cdn=/fonts\.|gstatic|jsdelivr|unpkg|esm\.sh|cdnjs|cdn\.|googleapis|twemoji|cloudflare/i;
+      for(const p of importedPaths){
+        const t=fileContents[p];if(typeof t!=='string')continue;
+        if(/socket\.io|[^A-Za-z.]io\(/.test(t))tags.add('socket.io realtime');
+        if(/pushSubscription|vapid/i.test(t))tags.add('web-push (degrades in APK)');
+        if(/type=["']password["']|login|sign[- ]in/i.test(t))login=true;
+        for(const mm of t.matchAll(/\.on\(\s*["']([a-zA-Z0-9_][\w-]{1,40})["']/g))ev.add(mm[1]);
+        for(const mm of t.matchAll(/\.emit\(\s*["']([a-zA-Z0-9_][\w-]{1,40})["']/g)){ev.add(mm[1]);snd.add(mm[1]);}
+        for(const mm of t.matchAll(/fetch\(\s*["'](\/[^"']+)["']/g))ep.add(mm[1].split('?')[0]);
+        for(const mm of t.matchAll(/localStorage\.(?:get|set)Item\(\s*["']([^"']+)["']/g))st.add(mm[1]);
+        if(/RTCPeerConnection/.test(t))tags.add('webrtc calls');
+        const sm=t.match(/https:\/\/[a-z0-9.-]+\.supabase\.co/i);if(sm){tags.add('supabase db (domain-only auth)');provAuth='supabase';}
+        if(/firebasejs|firebaseConfig|initializeApp\s*\(|getFirestore|getAuth\s*\(/.test(t))provAuth=provAuth||'firebase';
+        if(/appwrite/i.test(t))provAuth=provAuth||'appwrite';
+        if(!/\.html?$/i.test(p)){for(const mm of t.matchAll(/["'](https?:\/\/[^"'`\s]+)/g)){const u2=mm[1];if(!cdn.test(u2)&&/\/(api|socket\.io|auth|graphql)\b/i.test(u2))tags.add('external API');}}
+      }
+      fwkList=[];fwkAdvisory='';
+      const fwk=new Set();
+      const texts=Object.entries(fileContents).filter(([,v])=>typeof v==='string');
+      const pkgE=texts.find(([p])=>/(^|\/)package\.json$/.test(p));
+      let deps='';
+      if(pkgE){try{const pj=JSON.parse(pkgE[1]);deps=Object.keys(Object.assign({},pj.dependencies,pj.devDependencies)).join(' ');}catch(e){}}
+      const has=(re)=>re.test(deps);
+      if(has(/\breact\b/)||texts.some(([,v])=>/from\s*["']react["']/.test(v)))fwk.add('react');
+      if(has(/\bvue\b/)||texts.some(([p])=>p.endsWith('.vue')))fwk.add('vue');
+      if(has(/@angular\/core/)||texts.some(([,v])=>/ng-version=|ng-app/.test(v)))fwk.add('angular');
+      if(has(/\bsvelte\b/)||texts.some(([p])=>p.endsWith('.svelte')))fwk.add('svelte');
+      if(has(/\bjquery\b/)||texts.some(([,v])=>/jQuery\(/.test(v)))fwk.add('jquery');
+      if(has(/\bnext\b/)||texts.some(([,v])=>/__NEXT_DATA__/.test(v)))fwk.add('next');
+      if(has(/\bnuxt\b/)||texts.some(([,v])=>/__NUXT__/.test(v)))fwk.add('nuxt');
+      if(has(/tailwindcss/))fwk.add('tailwind');
+      if(has(/\bhtmx\b/)||texts.some(([,v])=>/hx-get=|hx-post=/.test(v)))fwk.add('htmx');
+      if(has(/alpinejs/)||texts.some(([,v])=>/x-data=/.test(v)))fwk.add('alpine');
+      if(texts.some(([p,v])=>/flutter_bootstrap\.js|_flutter\//.test(v)))fwk.add('flutter-web');
+      if(texts.some(([p])=>p.endsWith('.wasm'))||texts.some(([,v])=>/WebAssembly\.instantiate/.test(v)))fwk.add('wasm(rust/go/c++)');
+      if(has(/\bthree\b/))fwk.add('three.js');
+      if(texts.some(([p])=>p.endsWith('.php')))fwk.add('php→backend-only');
+      if(texts.some(([p])=>p.endsWith('.py')))fwk.add('python→backend-only');
+      if(texts.some(([p])=>/\.ts$/.test(p)&&!/\.d\.ts$/.test(p)))fwk.add('ts(needs build)');
+      if(texts.some(([p])=>/\.(kt|java)$/.test(p)))fwk.add('kotlin/java compatible');
+      if([...importedPaths].some(p=>/(^|\/)settings\.gradle(\.kts)?$/.test(p)))fwk.add('complete-gradle → own build');
+      if(texts.some(([p,v])=>/kotlin\.js|kotlin-browser|org\.gwtproject|gwt\.user\.agent|teaVM|j2cl/.test(v)))fwk.add('kotlin/java→web(compiled)');
+      fwkList=[...fwk].sort();
+      if(pkgE&&detectWebRoot(importedPaths)===null)fwkAdvisory=' · source-only → upload build output (dist/) or use LINK';
+      return{tags:[...tags],backend,login,provAuth:provAuth,dataMap:{events:[...ev].sort(),sends:[...snd].sort(),endpoints:[...ep].sort(),storage:[...st].sort(),frameworks:fwkList}};
+
+    }
+    function postImportHooks(){
+      schedulePersist();
+      /* auto-detect app icon from imported binaries */
+      if(!appIcon){
+        const names=['public/icons/icon-512.png','public/icons/icon-192.png','icons/icon-512.png','icons/icon-192.png','public/icon.png','icon.png','icon-512.png','icon-192.png','public/assets/icon-512.png','assets/icon-512.png','logo.png'];
+        for(const c of names){
+          const hit=[...importedPaths].find(p=>p===c);
+          if(hit&&binaryFiles[hit]){setAppIcon(binaryFiles[hit],hit,'auto-detected');break;}
+        }
+      }
+      /* auto-detect firebase / any backend-db usage */
+      const rx=/firebasejs|firebaseConfig|initializeApp\s*\(|getFirestore|getAuth\s*\(|firebase\.(app|auth|firestore)/;
+      let rxFirebase=false;
+      for(const p of importedPaths){
+        const t=fileContents[p];
+        if(typeof t==='string'&&rx.test(t)){rxFirebase=true;break;}
+      }
+      const sc=scanStack();
+      applyGroup();
+      if(sc.provAuth&&sc.provAuth!=='firebase'){
+        const w=$('#backendWrap');if(w)w.style.display='';
+        const lb=$('#backendLabel');if(lb)lb.textContent='Authorized site / domain ('+sc.provAuth+' authorizes DOMAINS only — paste the link your DB provider whitelisted)';
+      }
+      const dbTags=sc.tags.filter(t=>/supabase|socket\.io|external API|firebase|mysql|mongo/i.test(t));
+      if(rxFirebase||dbTags.length){
+        $('#firebaseCard').style.display='';
+        const tt=$('#fbTitle');if(tt)tt.textContent=rxFirebase?'Firebase Detected':'Backend Detected';
+        firebaseDetected=true;showGCard();
+      }
+      const sl=$('#stackLine');
+      if(sl)sl.textContent='detected: '+((sc.fwk||[]).length?(sc.fwk.join(' · ')):'vanilla html/css/js')+(sc.tags.length?' · '+sc.tags.join(' · '):'')+(sc.backend?' · backend: '+sc.backend:'')+(sc.advisory||'');
+      if(sc.backend&&$('#bBackend')&&!$('#bBackend').value)$('#bBackend').value=sc.backend;
+      updateDeploy();
+      refreshBuildBtn();
+    }
+    async function walkEntry(entry,prefix,out){
+      if(entry.isFile){
+        const f=await new Promise((res,rej)=>entry.file(res,rej));
+        out.push({path:prefix+entry.name,file:f});
+      }else if(entry.isDirectory){
+        const rd=entry.createReader();
+        while(true){
+          const batch=await new Promise((res,rej)=>rd.readEntries(res,rej));
+          if(!batch.length)break;
+          for(const en of batch)await walkEntry(en,prefix+entry.name+'/',out);
+        }
+      }
+    }
+    const dz=$('#dropZone');
+    dz.addEventListener('click',()=>$('#pickFiles').click());
+    $('#pickFilesBtn').addEventListener('click',()=>$('#pickFiles').click());
+    $('#pickFolderBtn').addEventListener('click',()=>$('#pickFolder').click());
+    $('#pickFiles').addEventListener('change',e=>{setMode('bundled');ingest([...e.target.files].map(f=>({path:f.webkitRelativePath||f.name,file:f})));e.target.value='';});
+    $('#pickFolder').addEventListener('change',e=>{setMode('bundled');ingest([...e.target.files].map(f=>({path:f.webkitRelativePath||f.name,file:f})));e.target.value='';});
+    window.addEventListener('dragover',e=>e.preventDefault());
+    window.addEventListener('drop',e=>e.preventDefault());
+    dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
+    dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+    dz.addEventListener('drop',async e=>{
+      e.preventDefault();dz.classList.remove('drag');
+      const out=[];
+      const entries=[...(e.dataTransfer.items||[])].map(i=>i.webkitGetAsEntry&&i.webkitGetAsEntry()).filter(Boolean);
+      if(entries.length){for(const en of entries)await walkEntry(en,'',out);}
+      else out.push(...[...e.dataTransfer.files].map(f=>({path:f.name,file:f})));
+      setMode('bundled');
+      ingest(out);
+    });
+    $('#clearImportsBtn').addEventListener('click',()=>{
+      for(const p of [...importedPaths]){
+        delete binaryFiles[p];
+        if(fileContents[p]!==undefined&&!DEMO_FILES.has(p))delete fileContents[p];
+        if(openFiles.includes(p)&&openFiles.length>1)closeTab(p);
+      }
+      importedPaths.clear();
+      $('#bAppName').value='';$('#bPackageId').value='';
+      $('#bVersionName').value='';$('#bVersionCode').value='';$('#bMinSdk').value='24';
+      $('#bNet').checked=true;$$('.bPerm').forEach(c=>c.checked=false);
+      if($('#bWebClientId'))$('#bWebClientId').value='';
+      if($('#bBackend'))$('#bBackend').value='';
+      if($('#bLiveUrl'))$('#bLiveUrl').value='';
+      if($('#bNativeMain'))$('#bNativeMain').value='';
+      const mb=$('#modeBar [data-mode="bundled"]');if(mb)mb.click();
+      const sl0=$('#stackLine');if(sl0)sl0.textContent='';
+      appIcon=null;const ip=$('#iconPreview');if(ip)ip.hidden=true;
+      const ist=$('#iconStatus');if(ist)ist.textContent='auto-detects from project';
+      $('#firebaseCard').style.display='none';$('#gsetupCard').style.display='none';
+      firebaseDetected=false;builtOnce=false;lastApk=null;setDock('build');fromProvider=false;updateDeploy();
+      Object.assign(gCert,{package:'',sha1:'',sha256:'',from:''});
+      try{localStorage.removeItem(GCERT_KEY);}catch{}
+      renderGCard();
+      renderImportList();renderImportedTree();
+      schedulePersist();
+      const z=$('#dropZone');z.classList.remove('done');
+      $('#dropZoneMsg').innerHTML='<b>Drop files, a folder, or a .zip</b><span>zips auto-unpack into buildable files</span>';
+    });
+    renderImportList();
+
+    /* ── AUTO-SAVE PROJECT: survives Studio updates & browser restarts ── */
+    function vdb(){return new Promise((res,rej)=>{const q=indexedDB.open('valence-studio',1);q.onupgradeneeded=()=>{q.result.createObjectStore('project')};q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}
+    async function idbPut(key,val){const db=await vdb();return new Promise((res,rej)=>{const tx=db.transaction('project','readwrite');tx.objectStore('project').put(val,key);tx.oncomplete=res;tx.onerror=()=>rej(tx.error)})}
+    async function idbGet(key){const db=await vdb();return new Promise((res,rej)=>{const q=db.transaction('project','readonly').objectStore('project').get(key);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}
+    let persistTimer=null;
+    $('#bVersionName').addEventListener('input',()=>{
+      const v=($('#bVersionName').value||'').trim();const n=$('#verNote');if(!n)return;
+      if(/^\d+(\.\d+)?$/.test(v)){const padded=v+'.0'.repeat(2-((v.match(/\./g)||[]).length));n.style.display='';n.textContent='Incomplete Version Name — completed to '+padded;}
+      else n.style.display='none';
+    });
+    function currentMode(){const a=$('#modeBar [data-mode].active');return a?a.dataset.mode:'bundled';}
+    function setMode(m){const b=$('#modeBar [data-mode="'+m+'"]');if(b)b.click();}
+    $$('#modeBar [data-mode]').forEach(btn=>btn.addEventListener('click',()=>{
+      $$('#modeBar [data-mode]').forEach(x=>x.classList.toggle('active',x===btn));
+      $('#liveUrlField').style.display=(btn.dataset.mode==='live'||btn.dataset.mode==='hybrid')?'':'none';
+      $('#nativeField').style.display=btn.dataset.mode==='native'?'':'none';
+      refreshBuildBtn();schedulePersist();
+    }));
+    function refreshBuildBtn(){
+      const b=$('#fakeBuild');if(!b||b.textContent==='Building…')return;
+      b.disabled=!(importedPaths.size>0||(currentMode()!=='bundled'&&($('#bLiveUrl')?$('#bLiveUrl').value.trim():'')));
+    }
+    ['#bAppName','#bPackageId'].forEach(sel=>{const el=$(sel);if(el)el.addEventListener('input',refreshBuildBtn);});
+    refreshBuildBtn();
+    function schedulePersist(){clearTimeout(persistTimer);persistTimer=setTimeout(persistProject,800);setDock('build');refreshBuildBtn();}
+    async function persistProject(){
+      try{
+        const files={};
+        for(const p of importedPaths)files[p]=binaryFiles[p]!==undefined?{bin:binaryFiles[p]}:{text:fileContents[p]??''};
+        await idbPut('current-v2',{
+          files,
+          icon:appIcon,
+          form:{
+            name:$('#bAppName').value,id:$('#bPackageId').value,
+            ver:$('#bVersionName').value,vc:$('#bVersionCode').value,
+            sdk:$('#bMinSdk').value,net:$('#bNet').checked,
+            perms:$$('.bPerm:checked').map(x=>x.value),
+            wcid:$('#bWebClientId')?$('#bWebClientId').value:'',
+            mode:currentMode(),url:($('#bLiveUrl')?$('#bLiveUrl').value:'')
+          },
+          savedAt:Date.now()
+        });
+      }catch(e){console.warn('[valence] auto-save failed',e)}
+    }
+    async function restoreProject(){
+      try{
+        const saved=await idbGet('current-v2');
+        if(!saved)return;
+        if(saved.form)applySavedForm(saved.form);
+        if(!saved.files||!Object.keys(saved.files).length)return;
+        for(const[p,rec]of Object.entries(saved.files)){
+          if(rec.bin!==undefined)binaryFiles[p]=rec.bin instanceof Uint8Array?rec.bin:new Uint8Array(rec.bin);
+          else fileContents[p]=rec.text;
+          importedPaths.add(p);
+        }
+        if(saved.icon)setAppIcon(saved.icon instanceof Uint8Array?saved.icon:new Uint8Array(saved.icon),'app icon','restored');
+        renderImportList();renderImportedTree();
+        $('#dropZone').classList.add('done');
+        $('#dropZoneMsg').innerHTML='<b>'+importedPaths.size+' files restored</b><span>auto-saved '+new Date(saved.savedAt).toLocaleString()+' — kept on this device until you clear it</span>';
+        postImportHooks();
+      }catch(e){console.warn('[valence] restore failed',e)}
+    }
+    function applySavedForm(f){
+      if(f.name)$('#bAppName').value=f.name;
+      if(f.id)$('#bPackageId').value=String(f.id).replace(/^com\./,'');
+      if(f.google&&f.google.webClientId){$('#bWebClientId').value=f.google.webClientId;firebaseDetected=true;showGCard();}
+      refreshBuildBtn();
+      if(f.mode&&f.mode!=='bundled')setMode(f.mode);
+      if(f.url&&$('#bLiveUrl'))$('#bLiveUrl').value=f.url;
+      if(f.ver)$('#bVersionName').value=f.ver;
+      if(f.vc)$('#bVersionCode').value=f.vc;
+      if(f.sdk)$('#bMinSdk').value=f.sdk;
+      if(typeof f.net==='boolean')$('#bNet').checked=f.net;
+      $$('.bPerm').forEach(c=>c.checked=(f.perms||[]).includes(c.value));
+      if(f.wcid&&$('#bWebClientId'))$('#bWebClientId').value=f.wcid;
+    }
+    /* save when imported files are edited in the workspace */
+    code.addEventListener('input',()=>{if(importedPaths.has(currentFile()))schedulePersist()});
+    ['#bAppName','#bPackageId','#bVersionName','#bVersionCode','#bMinSdk','#bWebClientId'].forEach(sel=>{const el=$(sel);if(el)el.addEventListener('change',schedulePersist)});
+    $$('.bPerm').forEach(c=>c.addEventListener('change',schedulePersist));
+    $('#bNet').addEventListener('change',schedulePersist);
+    restoreProject();
+
+    /* ── REAL BUILD: package workspace → POST to Valence builder → download APK ── */
+    const CRC_T=(()=>{const t=new Uint32Array(256);for(let i=0;i<256;i++){let c=i;for(let j=0;j<8;j++)c=c&1?0xedb88320^(c>>>1):c>>>1;t[i]=c>>>0}return t})();
+    function crc32(d){let c=0xffffffff;for(const b of d)c=CRC_T[(c^b)&255]^(c>>>8);return(c^0xffffffff)>>>0}
+    function zipStore(entries){
+      const enc=new TextEncoder(),local=[],central=[];let off=0;
+      const u16=(v,o,n)=>v.setUint16(o,n,true),u32=(v,o,n)=>v.setUint32(o,n>>>0,true);
+      for(const[name0,data]of entries){
+        const name=enc.encode(name0),crc=crc32(data);
+        const lh=new Uint8Array(30),lv=new DataView(lh.buffer);
+        u32(lv,0,0x04034b50);u16(lv,4,20);u16(lv,6,0x0800);u32(lv,14,crc);u32(lv,18,data.length);u32(lv,22,data.length);u16(lv,26,name.length);
+        local.push(lh,name,data);
+        const ch=new Uint8Array(46),cv=new DataView(ch.buffer);
+        u32(cv,0,0x02014b50);u16(cv,4,20);u16(cv,6,20);u16(cv,8,0x0800);u32(cv,16,crc);u32(cv,20,data.length);u32(cv,24,data.length);u16(cv,28,name.length);u32(cv,42,off);
+        central.push(ch,name);off+=lh.length+name.length+data.length;
+      }
+      const cs=central.reduce((s,p)=>s+p.length,0);
+      const end=new Uint8Array(22),ev=new DataView(end.buffer);
+      u32(ev,0,0x06054b50);u16(ev,8,entries.length);u16(ev,10,entries.length);u32(ev,12,cs);u32(ev,16,off);
+      const total=[...local,...central,end],size=total.reduce((s,p)=>s+p.length,0),out=new Uint8Array(size);let o=0;
+      for(const p of total){out.set(p,o);o+=p.length}return out;
+    }
+    function buildValenceConfig(){
+      const perms=$$('.bPerm:checked').map(x=>x.value);
+      const net=$('#bNet').checked;
+      const webClientId=($('#bWebClientId')?.value||'').trim();
+      const cfg={
+        format:1,
+        name:$('#bAppName').value.trim()||'My App',
+        id:'com.'+(($('#bPackageId').value.trim().replace(/^com\./,''))||'example.app'),
+        version:(()=>{const v=($('#bVersionName').value.trim()||'1.0.0');return /^\d+(\.\d+)?$/.test(v)?v+'.0'.repeat(2-((v.match(/\./g)||[]).length)):v;})(),
+        versionCode:Math.max(1,parseInt($('#bVersionCode').value,10)||1),
+        entry: importedPaths.has('public/index.html')?'public/index.html':'index.html',
+        capabilities:['filesystem','database','dialogs',...perms],
+        permissions:perms,
+        network:{enabled:net,allow:net?['*']:[]},
+        android:{minSdk:Math.max(24,parseInt($('#bMinSdk').value,10)||24),targetSdk:34}
+      };
+      const backend=($('#bBackend')?.value||'').trim();
+      if(backend)cfg.network.backend=backend;
+      const siteUrl=($('#bLiveUrl')?.value||'').trim();
+      const modeNow=currentMode();
+      if(modeNow==='native'){cfg.mode='native';const nm=($('#bNativeMain')?.value||'').trim();cfg.native={mainActivity:nm||'MainActivity'};}
+      else if(modeNow!=='bundled'&&siteUrl){cfg.mode=modeNow;cfg.liveUrl=siteUrl;}
+      cfg.dataMap=scanStack().dataMap;
+      if(webClientId)cfg.google={webClientId};
+      return cfg;
+    }
+    const bLog=line=>{const t=$('#buildLog');t.textContent+='\n'+line;t.scrollTop=t.scrollHeight};
+    const pullLog=async(ep)=>{try{const r=await fetch(ep.replace(/\/build\/?$/,'/buildlog'));const j=await r.json();if(j&&j.log){const g=j.log.split('\n').filter(l=>l.trim().startsWith('google'));if(g.length){bLog('\n'+g.join('\n'));applyGoogleLines(g);}return g.length;}return 0;}catch{return 0;}};
+    /* ── Google Sign-In setup card ───────────────────────────────── */
+    const GCERT_KEY='valence-google-cert';
+    const gCert=JSON.parse(localStorage.getItem(GCERT_KEY)||'null')||{package:'',sha1:'',sha256:'',from:''};
+    let firebaseDetected=false,builtOnce=false;
+    const showGCard=()=>{if(!(firebaseDetected&&builtOnce))return;const c=$('#gsetupCard');if(c)c.style.display='';};
+    function applyGoogleLines(lines){
+      for(const raw of lines){
+        const l=raw.replace(/^.*?google\s*/,'');
+        let m;
+        if(m=l.match(/\bpackage\s+([A-Za-z][\w.]*)/))gCert.package=m[1];
+        else if(m=l.match(/\bSHA-1\s+([0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){19})/)){gCert.sha1=m[1];const f=l.match(/\(([^)]+)\)/);if(f)gCert.from=f[1];}
+        else if(m=l.match(/\bSHA-256\s+([0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){31})/))gCert.sha256=m[1];
+      }
+      if(!gCert.package)gCert.package=($('#bPackageId')?.value||'').trim();
+      renderGCard();showGCard();
+      try{localStorage.setItem(GCERT_KEY,JSON.stringify(gCert));}catch{}
+    }
+    function renderGCard(){
+      const set=(id,val,ph)=>{const e=$(id);if(!e)return;if(val){e.textContent=val;e.classList.remove('empty');}else{e.textContent=ph||'—';e.classList.add('empty');}};
+      set('#gPackage',gCert.package,'—');
+      set('#gSha1',gCert.sha1,'—');
+    }
+    const gCopy=async(id)=>{
+      const el=$(id);const text=el?el.textContent.trim():'';
+      if(!text||el.classList.contains('empty'))return;
+      try{await navigator.clipboard.writeText(text);}
+      catch{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.append(ta);ta.select();try{document.execCommand('copy');}catch{}ta.remove();}
+      const btn=$('[data-gcopy="'+id.slice(1)+'"]');
+      if(btn){const old=btn.textContent;btn.textContent='COPIED ✓';setTimeout(()=>btn.textContent=old,1400);}
+    };
+    const refreshGoogleCerts=async()=>{
+      const ep=($('#bEndpoint')?.value||'').trim()||'/api/build';
+      bLog('→ pulling cert…');
+      const n=await pullLog(ep);
+      if(n)bLog('✓ card updated');
+      else bLog('! no cert yet — build once first');
+    };
+    $$('[data-gcopy]').forEach(b=>b.addEventListener('click',()=>gCopy('#'+b.dataset.gcopy)));
+    $('#gRefresh')?.addEventListener('click',refreshGoogleCerts);
+    $('#bWebClientId')?.addEventListener('input',()=>{if(($('#bWebClientId').value||'').trim()){firebaseDetected=true;showGCard();}});
+    if(gCert.sha1||gCert.package)showGCard();
+    renderGCard();
+    const BUILD_KEY='valence-builder';
+    try{const s=JSON.parse(localStorage.getItem(BUILD_KEY)||'{}');if(s.endpoint)$('#bEndpoint').value=s.endpoint;}catch{}
+    /* auto-detect local builder on the same server */
+    fetch('/health').then(r=>r.json()).then(h=>{
+      if(h&&h.builder){bLog('✓ builder online ('+h.builder+')'+(h.sdk?'\n✓ Android SDK: '+h.sdk:'\n! Android SDK not found on server — run setup-termux-android.sh'));}
+    }).catch(()=>bLog('! no builder on this server — start it with: sh START-STUDIO.sh'));
+    let lastApk=null;
+    let fromProvider=false;
+    function updateDeploy(){const w=$('#backendWrap');if(w)w.style.display=fromProvider?'':'none';}
+    function setDock(mode){
+      $('#fakeBuild').style.display=(mode==='build')?'':'none';
+      const d=$('#dockDone');if(d)d.style.display=(mode==='done')?'flex':'none';
+    }
+    $('#apkDownload').addEventListener('click',()=>{
+      if(!lastApk)return;
+      const a=document.createElement('a');a.href=URL.createObjectURL(lastApk.blob);a.download=lastApk.name;
+      document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+      bLog('✓ APK downloaded — install it on your Android device');
+    });
+    $('#apkSave').addEventListener('click',async()=>{
+      if(!lastApk)return;
+      const btn=$('#apkSave');btn.textContent='…';
+      try{
+        const ep=(($('#bEndpoint').value||'').trim()||'/api/build').replace(/\/build\/?$/,'/saveapk/'+encodeURIComponent(($('#bAppName').value||'app').trim()));
+        const r=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/octet-stream'},body:lastApk.blob});
+        const j=await r.json();if(!r.ok)throw new Error(j.error||'save failed');
+        bLog('✓ APK saved on builder ('+(j.path||'workspace')+')');
+        btn.textContent='SAVED ✓';setTimeout(()=>btn.textContent='SAVE',1500);
+      }catch(e){bLog('✗ '+e.message);btn.textContent='SAVE';}
+    });
+    $('#fakeBuild').addEventListener('click', async () => {
+      const ownG=[...importedPaths].some(p=>/(^|\/)settings\.gradle(\.kts)?$/.test(p));
+      if(!ownG&&!($('#bAppName').value.trim()||$('#bPackageId').value.trim())){const cb=$('[data-stage="config"]');if(cb)cb.click();SFX.stage();return;}
+      const mode=currentMode();const siteU=($('#bLiveUrl')?$('#bLiveUrl').value.trim():'');
+      if((mode==='live'||mode==='hybrid')&&!siteU){const cb=$('[data-stage="config"]');if(cb)cb.click();bLog('✗ '+mode.toUpperCase()+' needs the Website URL');return;}
+      if(mode==='hybrid'&&importedPaths.size===0){const ub=$('[data-stage="upload"]');if(ub)ub.click();bLog('✗ HYBRID needs files — pull/upload first (or choose LIVE)');return;}
+      if(mode==='native'&&importedPaths.size===0){const ub=$('[data-stage="upload"]');if(ub)ub.click();bLog('✗ NATIVE needs your java/ + res/ sources uploaded first');return;}
+      const ob=$('[data-stage="output"]');if(ob&&!ob.classList.contains('active'))ob.click();
+      const btn=$('#fakeBuild');
+      const cfg=buildValenceConfig();
+      if(!/^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$/.test(cfg.id)){bLog('✗ invalid Package ID: '+cfg.id);return;}
+      const endpoint=$('#bEndpoint').value.trim()||'/api/build';
+      localStorage.setItem(BUILD_KEY,JSON.stringify({endpoint}));
+      const enc=new TextEncoder();
+      const pack=new Map();
+      const finalPath=n=>(n==='valence.json'||n==='cartridge.json')?null:n;
+      for(const[name,text]of Object.entries(fileContents)){const p=finalPath(name);if(p)pack.set(p,enc.encode(text));}
+      for(const[name,data]of Object.entries(binaryFiles)){const p=finalPath(name);if(p)pack.set(p,data);}
+      if(appIcon)pack.set('resources/icon.png',appIcon);
+      pack.set('valence.json',enc.encode(JSON.stringify(cfg,null,2)+'\n'));
+      const entries=[...pack.entries()];
+      $('#buildLog').textContent='valence@studio: build requested';
+      bLog('✓ validated APK fields ('+cfg.id+' v'+cfg.version+')');
+      const zip=zipStore(entries);
+      bLog('✓ packed '+entries.length+' files → '+(zip.length/1024).toFixed(1)+' KB project.zip');
+      if(appIcon)bLog('✓ launcher icon included');
+      SFX.build();
+      btn.disabled=true;btn.textContent='Building…';setDock('build');
+      let shown=0;
+      const poll=setInterval(async()=>{
+        try{
+          const r=await fetch(endpoint.replace(/\/build\/?$/,'/buildlog'));
+          const j=await r.json();
+          if(j&&j.log&&j.log.length>shown){
+            const el=$('#buildLog');
+            el.textContent+='\n'+j.log.slice(shown).trimEnd();
+            el.scrollTop=el.scrollHeight;
+            shown=j.log.length;
+          }
+        }catch(e){}
+      },1500);
+      try{
+        bLog('→ sending to builder: '+endpoint);
+        bLog('→ compiling with Gradle… (first build can take minutes)');
+        const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/zip'},body:new Blob([zip],{type:'application/zip'})});
+        const type=res.headers.get('content-type')||'';
+        if(!res.ok){
+          let msg='builder returned '+res.status;
+          try{const e=await res.json();msg=e.error||msg;if(e.log)bLog(e.log.slice(-3000));}catch{}
+          throw new Error(msg);
+        }
+        if(type.includes('android.package-archive')||type.includes('octet-stream')){
+          bLog('✓ Gradle build finished');
+          const apk=await res.blob();
+          lastApk={blob:apk,name:(cfg.name.replace(/[^A-Za-z0-9._-]+/g,'-')||'app')+'.apk'};
+          bLog('✓ APK ready ('+(apk.size/1048576).toFixed(2)+' MB) — DOWNLOAD or SAVE below');
+          await pullLog(endpoint);
+          SFX.ok();
+          builtOnce=true;renderGCard();showGCard();setDock('done');
+        }else{
+          const job=await res.json();
+          if(job.downloadUrl){
+            bLog('→ fetching APK artifact');
+            const r=await fetch(job.downloadUrl);if(!r.ok)throw new Error('APK download failed');
+            lastApk={blob:await r.blob(),name:(cfg.name.replace(/[^A-Za-z0-9._-]+/g,'-')||'app')+'.apk'};
+            bLog('✓ APK ready — DOWNLOAD or SAVE below');
+          }else{
+            bLog('! builder response: '+JSON.stringify(job).slice(0,400));
+          }
+          await pullLog(endpoint);
+          SFX.ok();
+          builtOnce=true;renderGCard();showGCard();setDock('done');
+        }
+      }catch(err){
+        clearInterval(poll);
+        SFX.err();
+        bLog('✗ '+err.message);
+        await pullLog(endpoint);
+        bLog('Hint: run the Studio with "sh START-STUDIO.sh" so the builder runs on this same localhost.');
+      }finally{
+        clearInterval(poll);
+        btn.textContent='Start Build APK';refreshBuildBtn();
+      }
+    });
+    $$('[data-folder-toggle]').forEach(btn => btn.addEventListener('click', () => {
+      const folder = btn.closest('.tree-folder');
+      folder.classList.toggle('open');
+      btn.setAttribute('aria-expanded', folder.classList.contains('open'));
+    }));
+    $$('.tree-row.file').forEach(row => row.addEventListener('click', () => {
+      const file = row.dataset.drawerFile;
+      if(file && fileContents[file] !== undefined) openFile(file);
+      else $('#editorConsole').textContent = '$ valence asset\nselected ' + row.textContent.trim();
+      if($('#autoCloseSwitch').checked && file){ setDrawerTool('menu') }
+    }));
+    $('#themeSwitch').addEventListener('change', e => body.dataset.theme = e.target.checked ? 'light' : 'dark');
+    $('#compactSwitch').addEventListener('change', e => mainShell.classList.toggle('nav-collapsed', e.target.checked));
+    $('#wrapSwitch').addEventListener('change', e => $('#workspaceGrid').classList.toggle('word-wrap', e.target.checked));
+    $('#fontSize').addEventListener('change', e => document.documentElement.style.setProperty('--editor-size', e.target.value));
+    $('#tabSize').addEventListener('change', e => code.style.tabSize = e.target.value);
+    $('#languageMode').addEventListener('click', () => { const langs=['HTML','CSS','JavaScript','JSON','Markdown']; const now=$('#languageMode').textContent; $('#languageMode').textContent = langs[(langs.indexOf(now)+1)%langs.length]; highlightCode(); });
+  </script>
+</body>
+</html>
+pt>
+</body>
+</html>

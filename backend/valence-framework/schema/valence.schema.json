@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:nhztech:valence:schema:v1",
+  "title": "Valence project manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "name",
+    "id",
+    "version",
+    "versionCode",
+    "entry",
+    "capabilities",
+    "permissions",
+    "network",
+    "android"
+  ],
+  "properties": {
+    "format": { "const": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z][A-Za-z0-9_]*)+$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:[-+][0-9A-Za-z.-]+)?$"
+    },
+    "versionCode": { "type": "integer", "minimum": 1 },
+    "entry": { "const": "public/index.html" },
+    "capabilities": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "filesystem",
+          "database",
+          "dialogs",
+          "notifications",
+          "camera",
+          "microphone",
+          "location"
+        ]
+      }
+    },
+    "permissions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "camera",
+          "microphone",
+          "location",
+          "notifications",
+          "bluetooth"
+        ]
+      }
+    },
+    "network": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "allow"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "allow": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "android": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minSdk", "targetSdk"],
+      "properties": {
+        "minSdk": { "type": "integer", "minimum": 24 },
+        "targetSdk": { "type": "integer", "minimum": 24 }
+      }
+    }
+  }
+}

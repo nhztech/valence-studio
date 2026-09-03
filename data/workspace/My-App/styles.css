@@ -1,0 +1,10 @@
+body {
+  margin: 0;
+  background: #070913;
+  color: #eaf8ff;
+}
+.screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+}

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Nhzterm" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">#FF282A36</item>
+        <item name="android:statusBarColor">#FF21222C</item>
+    </style>
+</resources>

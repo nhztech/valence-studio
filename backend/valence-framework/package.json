@@ -1,0 +1,19 @@
+{
+  "name": "valence-framework-nhztech",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Valence Framework by NHZTech: package web applications as native Android projects.",
+  "type": "module",
+  "bin": {
+    "valence": "./cli/valence.mjs"
+  },
+  "scripts": {
+    "check": "node --check cli/valence.mjs && node --check cli/archive.mjs && node --check cli/project.mjs && node --check cli/android.mjs && node --check sdk/valence.js && node --check examples/vault/public/vault.js",
+    "validate:vault": "node cli/valence.mjs validate examples/vault",
+    "pack:vault": "node cli/valence.mjs pack examples/vault --out /tmp/valence-vault.cart --force"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}

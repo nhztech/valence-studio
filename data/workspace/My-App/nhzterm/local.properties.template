@@ -1,0 +1,3 @@
+# Copy to local.properties on the build device. NOT committed.
+# Points at the SDK that Valence's setup-termux-android.sh already installed.
+sdk.dir=/data/data/com.termux/files/home/.valence/android-sdk

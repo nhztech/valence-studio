@@ -1,0 +1,28 @@
+{
+  "hosting": {
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "headers": [
+      {
+        "source": "**/*.@(js|css|html|json)",
+        "headers": [
+          {"key": "Cache-Control", "value": "no-store"}
+        ]
+      }
+    ],
+    "rewrites": [
+      {
+        "source": "/api/**",
+        "run": {
+          "serviceId": "valence-builder",
+          "region": "asia-southeast1"
+        }
+      },
+      {"source": "**", "destination": "/index.html"}
+    ]
+  }
+}

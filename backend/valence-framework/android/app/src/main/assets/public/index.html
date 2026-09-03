@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Vault</title>
+    <link rel="stylesheet" href="vault.css" />
+  </head>
+  <body>
+    <div class="phone-chrome">
+      <div class="status">
+        <span class="clock" id="clock">9:41</span>
+        <span class="sig">VALENCE · LOCAL</span>
+      </div>
+      <header class="top">
+        <div>
+          <p class="eyebrow">offline notes</p>
+          <h1>Vault</h1>
+        </div>
+        <button class="fab" id="newBtn" type="button" title="New note">+</button>
+      </header>
+      <p class="meta" id="meta">booting kernel…</p>
+      <div class="list" id="list"></div>
+    </div>
+
+    <div class="sheet hidden" id="sheet">
+      <div class="sheet-bar">
+        <button type="button" id="backBtn">←</button>
+        <span id="sheetTitle">Note</span>
+        <button type="button" class="danger" id="delBtn">Delete</button>
+      </div>
+      <input id="title" maxlength="80" placeholder="Title" />
+      <textarea id="body" placeholder="Write. This never leaves the device."></textarea>
+      <p class="save-state" id="saveState"></p>
+    </div>
+
+    <script src="valence.js"></script>
+    <script src="vault.js"></script>
+  </body>
+</html>

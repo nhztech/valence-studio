@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">nhzterm</string>
+    <string name="notif_channel_name">nhztermd</string>
+    <string name="notif_channel_desc">Keeps terminal sessions alive in the background.</string>
+    <string name="notif_title">nhztermd running</string>
+</resources>
