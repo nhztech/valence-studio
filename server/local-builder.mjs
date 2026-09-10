@@ -235,6 +235,27 @@ function detectSdk() {
   return "";
 }
 
+/* auto-install the Android SDK/JDK toolchain on first build (Termux only).
+ * Mirrors the existing NDK/Gradle/CMake auto-install pattern below instead
+ * of requiring the user to run setup-termux-android.sh by hand first. */
+function ensureSdk() {
+  let sdk = detectSdk();
+  if (sdk) return sdk;
+  if (!process.env.PREFIX) return ""; // not Termux — can't auto-install here
+  const script = path.join(FRAMEWORK, "setup-termux-android.sh");
+  if (!fs.existsSync(script)) return "";
+  say("Android SDK missing — auto-installing toolchain (first time only, large download)...");
+  lastLog += "[valence] Android SDK missing — auto-installing toolchain (first time only, large download)...\n";
+  try {
+    execSync(`sh "${script}"`, { stdio: "inherit", timeout: 30 * 60 * 1000 });
+  } catch (e) {
+    say("Android SDK auto-install failed: " + e.message);
+    lastLog += "[valence] Android SDK auto-install failed: " + e.message + "\n";
+  }
+  sdk = detectSdk();
+  return sdk;
+}
+
 function say(msg) { console.log(`[valence] ${msg}`); }
 
 function sendJson(res, code, body) {
@@ -346,7 +367,8 @@ async function handleBuild(req, res) {
         }
       };
       scanC(projectDir);
-      if (hasNativeC) ensureArmCmake(detectSdk());
+      const sdkForCmake = ensureSdk();
+      if (hasNativeC) ensureArmCmake(sdkForCmake);
       let ndk0 = hasNativeC ? detectNdk() : "";
       if (hasNativeC && !ndk0 && process.env.PREFIX) {
         say("NDK missing — auto-installing termux-ndk (first time only, large download)...");
@@ -360,7 +382,7 @@ async function handleBuild(req, res) {
         ndk0 = detectNdk();
       }
       if (hasNativeC && !ndk0) throw new Error("project contains C/C++/CMake — NDK not installed: run sh setup-termux-ndk.sh");
-      const sdk0 = detectSdk();
+      const sdk0 = sdkForCmake || detectSdk();
       const hasWrapper = fs.existsSync(path.join(projectDir, "gradlew"));
       let gradleBin = "";
       if (hasWrapper) {
@@ -448,8 +470,8 @@ async function handleBuild(req, res) {
     let valMode = "";
     try { valMode = JSON.parse(fs.readFileSync(path.join(projectDir, fs.existsSync(path.join(projectDir, "valence.json")) ? "valence.json" : "cartridge.json"), "utf8")).mode || ""; } catch {}
     if (valMode !== "live" && !fs.existsSync(path.join(projectDir, "public", "index.html")) && !fs.existsSync(path.join(projectDir, "index.html"))) throw new Error("index.html is required (at root or public/)");
-    const sdk = detectSdk();
-    if (!sdk) throw new Error("Android SDK not found. Run the framework's setup-termux-android.sh once, or set ANDROID_HOME.");
+    const sdk = ensureSdk();
+    if (!sdk) throw new Error("Android SDK not found and could not be auto-installed. On Termux, check your network/storage and try again; on desktop, install Android Studio's SDK and set ANDROID_HOME.");
     say(`building APK (sdk: ${sdk})`);
     const output = path.join(root, "app.apk");
     lastLog = await runBuild(projectDir, output, sdk);
@@ -620,7 +642,7 @@ function startListening(port, attemptsLeft) {
   server.listen(port, "0.0.0.0", () => {
     const sdk = detectSdk();
     say(`Valence Studio + Builder → http://localhost:${port}`);
-    say(sdk ? `Android SDK: ${sdk}` : "Android SDK: NOT FOUND — builds will fail until setup-termux-android.sh is run");
+    say(sdk ? `Android SDK: ${sdk}` : "Android SDK: not found yet — will auto-install on your first build (Termux only; large download)");
   });
 }
 startListening(PORT, 20);

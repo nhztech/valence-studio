@@ -2,70 +2,44 @@
 
 **Web Technologies to APK — NHZTech**
 
-A separate browser IDE and remote build client for Valence Framework. It is intentionally not included in `valence-framework.zip`.
+Turn a web app into an Android APK. Comes with a browser IDE (Studio) and the underlying CLI framework (Valence), for whichever way you like to work.
 
-## Included
-
-- Original anime-tech gold/navy identity and cel-shaded Valence mascot
-- Hamburger navigation
-- Dashboard and build pipeline status
-- VS Code-inspired workspace
-- Folder and multi-file import
-- File tree, tabs, text editor, line numbers, keyboard Tab/Ctrl+S
-- Live HTML preview
-- Visual Android app identity and permission settings
-- IndexedDB project cache
-- Cached project manager and build history
-- ZIP build-package export
-- Remote builder API client with logs/progress/APK download
-- Firebase Hosting configuration
-- Cloud Run Android-builder scaffold
-
-## Cache policy
-
-Imported source is stored only in browser IndexedDB. It is not uploaded until **Send & Build APK** is pressed.
-
-Clearing this site's browser data deletes cached projects, settings, and build history. Normal HTTP-cache cleanup behavior varies by browser; use **Clear All Studio Data** for a guaranteed wipe.
-
-Do not rely on browser cache as the only copy of source code. Studio can export a build ZIP at any time.
-
-## Run locally
+## Install
 
 ```bash
-python3 -m http.server 4173 --directory public
+apt update
+apt install git nodejs -y
+git clone https://github.com/nhztech/valence-studio.git
+cd valence-studio
 ```
 
-Open `http://localhost:4173`.
+## Option A — Studio (browser IDE, recommended)
 
-## Firebase architecture
-
-```text
-Firebase Hosting        -> Studio static files
-IndexedDB               -> temporary local project cache
-Cloud Run builder       -> Android SDK + Valence + Gradle
-Firebase Authentication -> builder access control
-APK response            -> browser download
+```bash
+bash START-STUDIO.sh
 ```
 
-Firebase Hosting alone cannot compile APKs. Deploy `backend/` to Cloud Run and keep the build endpoint protected. See `backend/README.md`.
+Open the URL it prints (default `http://localhost:8080`), build your app in the browser, click **Send & Build APK**. First build auto-installs the Android SDK and everything else it needs — later builds are fast.
 
-## Build API
+## Option B — CLI (no browser)
 
-Studio sends:
-
-```text
-POST /api/build
-Authorization: Bearer <Firebase ID token>
-Content-Type: multipart/form-data
-project: ZIP
-config: valence.json
+```bash
+cd backend/valence-framework
+sh install.sh
+sh setup-termux-android.sh   # once, installs the Android SDK
 ```
 
-The API may return an APK directly or JSON containing a build job/status/download URL.
+```bash
+valence init myapp --name MyApp --id com.example.myapp
+valence dev myapp                          # live preview
+valence build myapp --target apk --out app.apk
+```
 
-## Branding files
+Run `valence --help` for all commands.
 
-- `branding/valence-studio-anime-master.png` — 1024px generated anime master
-- `public/assets/valence-studio-logo.webp` — optimized web logo
-- `public/assets/icon-192.png`
-- `public/assets/icon-512.png`
+## Notes
+
+- Requires Node.js 18+ and, for building APKs, Termux on an Android (arm64) device.
+- No `npm install` needed for Studio — the local builder has zero dependencies.
+- Want a hosted version instead of local? See [`backend/README.md`](backend/README.md) for the Firebase + Cloud Run setup.
+- Patch history: [`PATCHES.md`](PATCHES.md)
