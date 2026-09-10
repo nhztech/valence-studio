@@ -51,16 +51,55 @@ function urlTries(u) {
 function ensureArmCmake(sdk) {
   if (!sdk || !process.env.PREFIX) return;
   const cmakeRoot = path.join(sdk, "cmake");
-  if (!fs.existsSync(cmakeRoot)) return;
-  const sysCmake = path.join(process.env.PREFIX, "bin", "cmake");
-  const sysNinja = path.join(process.env.PREFIX, "bin", "ninja");
-  if (!fs.existsSync(sysCmake)) {
-    say("installing Termux cmake/ninja (arm64) for native C/C++ builds...");
-    lastLog += "[valence] installing Termux cmake/ninja (arm64)...\n";
-    try { execSync("pkg install -y cmake ninja", { stdio: "inherit", timeout: 10 * 60 * 1000 }); } catch (e) { say("pkg install cmake ninja failed: " + e.message); }
+  const pbin = n => path.join(process.env.PREFIX, "bin", n);
+  const sysCmake = pbin("cmake"), sysNinja = pbin("ninja");
+  const sysMake = pbin("make"), sysAwk = pbin("awk");
+
+  // Google ships NO aarch64-host SDK cmake (its packages are x86_64),
+  // and ndk-build needs GNU make + awk — neither ships with Termux.
+  // Install the arm64-native tools that cover BOTH AGP native paths:
+  //   externalNativeBuild.cmake  → cmake + ninja
+  //   externalNativeBuild.ndkBuild → make + awk
+  const missing = [];
+  if (!fs.existsSync(sysCmake)) missing.push("cmake");
+  if (!fs.existsSync(sysNinja)) missing.push("ninja");
+  if (!fs.existsSync(sysMake)) missing.push("make");
+  if (!fs.existsSync(sysAwk)) missing.push("gawk");
+  if (missing.length) {
+    say(`installing Termux ${missing.join("/")} (arm64) for native C/C++ builds...`);
+    lastLog += `[valence] installing Termux ${missing.join("/")} (arm64)...\n`;
+    try { execSync(`pkg install -y ${missing.join(" ")}`, { stdio: "inherit", timeout: 10 * 60 * 1000 }); } catch (e) { say("pkg install failed: " + e.message); }
   }
   if (!fs.existsSync(sysCmake)) return;
-  for (const ver of fs.readdirSync(cmakeRoot)) {
+
+  // AGP resolves "SDK cmake" by VERSION-NAMED FOLDER under $SDK/cmake
+  // (error [CXX1300]: "CMake 'X' was not found in SDK, PATH, or by
+  // cmake.dir property" — and a PATH cmake only satisfies an EXACT
+  // requested version). Google's binaries can't run on this arm64
+  // host, so create the folder layout AGP expects, with shims that
+  // exec Termux's arm64 cmake/ninja. 3.22.1 is the AGP 7.x–8.x
+  // default; the others cover common explicit version pins.
+  const SHIM_VERSIONS = ["3.18.1", "3.22.1", "3.28.3"];
+  for (const ver of SHIM_VERSIONS) {
+    const vbin = path.join(cmakeRoot, ver, "bin");
+    if (fs.existsSync(path.join(vbin, "cmake"))) continue; // already there
+    fs.mkdirSync(vbin, { recursive: true });
+    const shims = [["cmake", sysCmake], ["ninja", sysNinja]];
+    for (const name of ["ctest", "cpack"]) {
+      if (fs.existsSync(pbin(name))) shims.push([name, pbin(name)]);
+    }
+    for (const [name, target] of shims) {
+      const f = path.join(vbin, name);
+      fs.writeFileSync(f, `#!/bin/sh\nexec "${target}" "$@"\n`);
+      fs.chmodSync(f, 0o755);
+    }
+    say(`SDK cmake shim ${ver} → Termux arm64 cmake (AGP externalNativeBuild ready)`);
+    lastLog += `[valence] SDK cmake shim ${ver} → Termux arm64 cmake\n`;
+  }
+
+  // Legacy: any REAL SDK cmake dirs (x86_64 binaries fetched on another
+  // host) that can't execute here get wrapped with Termux's arm64 tools.
+  for (const ver of fs.existsSync(cmakeRoot) ? fs.readdirSync(cmakeRoot) : []) {
     const bin = path.join(cmakeRoot, ver, "bin");
     if (!fs.existsSync(bin)) continue;
     const c = path.join(bin, "cmake");
@@ -90,6 +129,7 @@ function detectNdk() {
   const candidates = [
     process.env.ANDROID_NDK_HOME,
     path.join(os.homedir(), ".valence", "android-ndk"),
+    path.join(os.homedir(), ".cartridge", "android-ndk"), // newer install layout (matches detectSdk)
     process.env.PREFIX ? path.join(process.env.PREFIX, "opt", "android-ndk") : "",
   ].filter(Boolean);
   for (const d of candidates) {
@@ -275,8 +315,26 @@ async function handleBuild(req, res) {
     fs.writeFileSync(zipFile, zip);
     const projectDir = path.join(root, "project");
     extractCart(zipFile, projectDir, { force: true });
-    const isOwnGradle = fs.existsSync(path.join(projectDir, "settings.gradle")) || fs.existsSync(path.join(projectDir, "settings.gradle.kts"));
+    // HOTFIX 09-03: many project zips wrap everything in a single
+    // top-level folder ("myapp/settings.gradle.kts"). extractCart keeps
+    // the layout as-is, so hoist the contents up one level when — and
+    // only when — the root has no Gradle file but the single subfolder
+    // is a Gradle project. Web projects are never affected.
+    const hasGradleRoot = d => fs.existsSync(path.join(d, "settings.gradle")) || fs.existsSync(path.join(d, "settings.gradle.kts"));
+    if (!hasGradleRoot(projectDir)) {
+      const top = fs.readdirSync(projectDir, { withFileTypes: true });
+      if (top.length === 1 && top[0].isDirectory() && hasGradleRoot(path.join(projectDir, top[0].name))) {
+        const inner = path.join(projectDir, top[0].name);
+        for (const n of fs.readdirSync(inner)) fs.renameSync(path.join(inner, n), path.join(projectDir, n));
+        fs.rmdirSync(inner);
+        say(`unwrapped single top-level folder "${top[0].name}"/ → project root`);
+        lastLog += `[valence] unwrapped single top-level folder "${top[0].name}"/ → project root\n`;
+      }
+    }
+    const isOwnGradle = hasGradleRoot(projectDir);
     if (isOwnGradle) {
+      say("own-Gradle project: building with the project's own Gradle files");
+      lastLog += "[valence] own-Gradle project: APK id/version come from build.gradle.kts (valence.json is metadata only)\n";
       let hasNativeC = false;
       const scanC = d => {
         for (const n of fs.readdirSync(d)) {

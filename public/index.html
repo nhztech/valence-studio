@@ -900,8 +900,8 @@ Waiting for build command...</div></div></div>
           .map(e=>({path:e.name.slice(7),file:new File([e.data],e.name.split('/').pop())}));
         await ingest(files,true);
         $('#dropZoneMsg').innerHTML='<b>✓ Valence APK unpacked: '+escA(label)+'</b><span>'+files.length+' files restored · structure preserved</span>';
-      }else if(entries.some(e=>e.name==='public/index.html'||e.name==='index.html'||e.name==='valence.json')){
-        /* project ZIP */
+      }else if(!entries.some(e=>/(^|\/)settings\.gradle(\.kts)?$/.test(e.name))&&(entries.some(e=>e.name==='public/index.html'||e.name==='index.html'||e.name==='valence.json'))){
+        /* project ZIP (a root settings.gradle(.kts) means full Android project → branch below) */
         const cfgE=entries.find(e=>e.name==='valence.json');
         if(cfgE){try{applyConfigToForm(JSON.parse(new TextDecoder().decode(cfgE.data)));}catch{}}
         const files=entries.filter(e=>e.name!=='valence.json');
@@ -1482,7 +1482,7 @@ Waiting for build command...</div></div></div>
         const type=res.headers.get('content-type')||'';
         if(!res.ok){
           let msg='builder returned '+res.status;
-          try{const e=await res.json();msg=e.error||msg;if(e.log)bLog(e.log.slice(-3000));}catch{}
+          try{const e=await res.json();msg=e.error||msg;if(e.log){const t=e.log.slice(-200).trim();if(!t||!(($('#buildLog').textContent)||'').includes(t))bLog(e.log.slice(-3000));}}catch{}
           throw new Error(msg);
         }
         if(type.includes('android.package-archive')||type.includes('octet-stream')){
