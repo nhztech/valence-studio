@@ -27,9 +27,12 @@
 #
 # Env overrides (also used by the test harness):
 #   ANDROID_SDK_ROOT / ANDROID_HOME  SDK location
-#   SKIP_PKG=1                       don't run pkg install (binaries must
+#   SKIP_APT=1                       don't run apt install (binaries must
 #                                    already be on PATH)
 set -eu
+
+# apt with self-healing package lists (try direct, else update + retry)
+apt_install() { apt install -y "$@" 2>/dev/null || { apt update -y && apt install -y "$@"; }; }
 
 EXACT=0
 [ "${1:-}" = "--exact" ] && EXACT=1
@@ -52,8 +55,8 @@ fi
 echo "==> SDK: $SDK"
 
 # ---- make sure arm64 cmake/ninja exist ----
-if [ "${SKIP_PKG:-0}" != "1" ]; then
-    pkg install -y cmake ninja
+if [ "${SKIP_APT:-0}" != "1" ]; then
+    apt_install cmake ninja
 fi
 command -v cmake >/dev/null 2>&1 || { echo "error: cmake not on PATH"; exit 1; }
 command -v ninja >/dev/null 2>&1 || { echo "error: ninja not on PATH"; exit 1; }
@@ -68,7 +71,7 @@ if [ "$EXACT" = "1" ]; then
     # remains the fallback. Needs ~2 GB free and patience.
     # ------------------------------------------------------------------
     echo "==> --exact: building CMake $CANON from source (experimental, slow)"
-    [ "${SKIP_PKG:-0}" != "1" ] && pkg install -y clang make python libuv rhash expat jsoncpp zlib
+    [ "${SKIP_APT:-0}" != "1" ] && apt_install clang make python libuv rhash expat jsoncpp zlib
     T=$(mktemp -d)
     trap 'rm -rf "$T"' EXIT
     cd "$T"

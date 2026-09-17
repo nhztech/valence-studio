@@ -128,7 +128,7 @@ if [ -e "$OUTPUT" ]; then
 fi
 
 if ! java_ok || ! sdk_ok; then
-  if ! command -v pkg >/dev/null 2>&1; then
+  if ! command -v apt >/dev/null 2>&1; then
     die "Java 17+ or Android SDK is missing. Install Android Studio or configure the Android SDK."
   fi
   warn "Android toolchain setup downloads packages and can use over 1 GB of storage."

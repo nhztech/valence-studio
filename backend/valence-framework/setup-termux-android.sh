@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 # Valence Android toolchain bootstrap for Termux (ARM64).
-set -euo pipefail
+# NOTE: keep this file runnable under plain POSIX sh as well — Termux's
+# /bin/sh is often dash/busybox, which dies on bash-only `set -o pipefail`
+# ("set: Illegal option -o pipefail"). The Studio auto-installer used to
+# invoke this with `sh` and crash on exactly that line.
+if [ -n "${BASH_VERSION:-}" ]; then
+  set -euo pipefail
+else
+  set -eu
+fi
 
 TOOLS_REVISION="9123335"
 TOOLS_SHA256="0bebf59339eaa534f4217f8aa0972d14dc49e7207be225511073c661ae01da0a"
@@ -15,7 +23,7 @@ warn() { printf '\033[1;33m[WARNING]\033[0m %s\n' "$*" >&2; }
 die() { printf '\033[1;31m[ERROR]\033[0m %s\n' "$*" >&2; return 1; }
 
 is_termux() {
-  [ -n "${PREFIX:-}" ] && command -v pkg >/dev/null 2>&1
+  [ -n "${PREFIX:-}" ] && command -v apt >/dev/null 2>&1
 }
 
 java_major() {
@@ -75,9 +83,9 @@ configure_aapt2() {
 }
 
 install_packages() {
-  say "Installing Java and ARM-compatible Android tools..."
-  pkg update -y
-  pkg install -y openjdk-21 aapt aapt2 apksigner wget unzip git
+  say "Installing Java and ARM-compatible Android tools (apt)..."
+  apt update -y
+  apt install -y openjdk-21 aapt aapt2 apksigner wget unzip git
 }
 
 install_command_tools() {
@@ -111,9 +119,12 @@ install_sdk_components() {
     return 0
   fi
   say "Accepting Android SDK licenses..."
-  set +o pipefail
+  # `yes` dies of SIGPIPE once sdkmanager exits; only bash has pipefail (which
+  # would surface that SIGPIPE as a pipeline failure), so toggle it there only.
+  # Under plain sh the pipeline status is sdkmanager's anyway — what we want.
+  if [ -n "${BASH_VERSION:-}" ]; then set +o pipefail; fi
   yes | "$sdkmanager" --sdk_root="$ANDROID_HOME" --licenses >/dev/null
-  set -o pipefail
+  if [ -n "${BASH_VERSION:-}" ]; then set -o pipefail; fi
   say "Installing SDK platform 34 and build tools 34.0.0..."
   "$sdkmanager" --sdk_root="$ANDROID_HOME" \
     "platforms;$PLATFORM" \

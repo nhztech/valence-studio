@@ -1037,7 +1037,7 @@ Waiting for build command...</div></div></div>
         const ps=j.projects||[];
         if(!ps.length){el.innerHTML='<div class="import-empty">no saved projects yet — build once or SAVE CURRENT PROJECT</div>';return;}
         el.innerHTML=ps.map(pr=>'<div class="import-row"><span class="import-name">'+escA(pr.name)+'</span><span class="import-meta">'+pr.count+' files</span><button class="mini-btn" data-ws-open="'+escA(pr.name)+'">OPEN</button></div>').join('');
-      }catch{el.innerHTML='<div class="import-empty">builder offline — start Studio with sh START-STUDIO.sh</div>';}
+      }catch{el.innerHTML='<div class="import-empty">builder offline — start Studio with sh valence-studio.sh</div>';}
     }
     $('#wsRefresh').addEventListener('click',wsLoadList);
     $('#wsList').addEventListener('click',async e=>{
@@ -1409,7 +1409,7 @@ Waiting for build command...</div></div></div>
     /* auto-detect local builder on the same server */
     fetch('/health').then(r=>r.json()).then(h=>{
       if(h&&h.builder){bLog('✓ builder online ('+h.builder+')'+(h.sdk?'\n✓ Android SDK: '+h.sdk:'\n! Android SDK not found on server — run setup-termux-android.sh'));}
-    }).catch(()=>bLog('! no builder on this server — start it with: sh START-STUDIO.sh'));
+    }).catch(()=>bLog('! no builder on this server — start it with: sh valence-studio.sh'));
     let lastApk=null;
     let fromProvider=false;
     function updateDeploy(){const w=$('#backendWrap');if(w)w.style.display=fromProvider?'':'none';}
@@ -1512,7 +1512,7 @@ Waiting for build command...</div></div></div>
         SFX.err();
         bLog('✗ '+err.message);
         await pullLog(endpoint);
-        bLog('Hint: run the Studio with "sh START-STUDIO.sh" so the builder runs on this same localhost.');
+        bLog('Hint: run the Studio with "sh valence-studio.sh" so the builder runs on this same localhost.');
       }finally{
         clearInterval(poll);
         btn.textContent='Start Build APK';refreshBuildBtn();

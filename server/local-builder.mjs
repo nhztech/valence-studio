@@ -66,9 +66,10 @@ function ensureArmCmake(sdk) {
   if (!fs.existsSync(sysMake)) missing.push("make");
   if (!fs.existsSync(sysAwk)) missing.push("gawk");
   if (missing.length) {
-    say(`installing Termux ${missing.join("/")} (arm64) for native C/C++ builds...`);
-    lastLog += `[valence] installing Termux ${missing.join("/")} (arm64)...\n`;
-    try { execSync(`pkg install -y ${missing.join(" ")}`, { stdio: "inherit", timeout: 10 * 60 * 1000 }); } catch (e) { say("pkg install failed: " + e.message); }
+    say(`installing ${missing.join("/")} (arm64, via apt) for native C/C++ builds...`);
+    lastLog += `[valence] installing ${missing.join("/")} via apt (arm64)...\n`;
+    const pkgs = missing.join(" ");
+    try { execSync(`apt install -y ${pkgs} || (apt update -y && apt install -y ${pkgs})`, { stdio: "inherit", timeout: 10 * 60 * 1000 }); } catch (e) { say("apt install failed: " + e.message); }
   }
   if (!fs.existsSync(sysCmake)) return;
 
@@ -235,6 +236,19 @@ function detectSdk() {
   return "";
 }
 
+/* Termux's /bin/sh is often dash/busybox, which rejects bash-only options —
+ * the SDK setup script used to die there on `set -o pipefail` ("set: Illegal
+ * option"), killing every auto-install. All setup scripts are now invoked
+ * with an explicit bash when it exists (and are themselves sh-guarded). */
+function scriptInterpreter() {
+  try { execSync("command -v bash", { stdio: "pipe" }); return "bash"; } catch { return "sh"; }
+}
+const SCRIPT_SH = scriptInterpreter();
+
+function runSetupScript(script, timeoutMs) {
+  execSync(`${SCRIPT_SH} "${script}"`, { stdio: "inherit", timeout: timeoutMs });
+}
+
 /* auto-install the Android SDK/JDK toolchain on first build (Termux only).
  * Mirrors the existing NDK/Gradle/CMake auto-install pattern below instead
  * of requiring the user to run setup-termux-android.sh by hand first. */
@@ -247,13 +261,58 @@ function ensureSdk() {
   say("Android SDK missing — auto-installing toolchain (first time only, large download)...");
   lastLog += "[valence] Android SDK missing — auto-installing toolchain (first time only, large download)...\n";
   try {
-    execSync(`sh "${script}"`, { stdio: "inherit", timeout: 30 * 60 * 1000 });
+    runSetupScript(script, 30 * 60 * 1000);
   } catch (e) {
     say("Android SDK auto-install failed: " + e.message);
-    lastLog += "[valence] Android SDK auto-install failed: " + e.message + "\n";
+    lastLog += "[valence] Android SDK auto-install failed: " + e.message + "\n" +
+      "[valence] check the Studio's terminal above for the cause, or install manually:\n" +
+      `[valence]   ${SCRIPT_SH} "${script}"   (or re-run: sh valence-studio.sh)\n`;
   }
   sdk = detectSdk();
   return sdk;
+}
+
+function ensureNdk() {
+  let ndk = detectNdk();
+  if (ndk) return ndk;
+  if (process.env.VALENCE_SKIP_NDK === "1") return ""; // user opted out of the big download
+  if (!process.env.PREFIX) return ""; // not Termux — can't auto-install here
+  const script = path.join(FRAMEWORK, "setup-termux-ndk.sh");
+  if (!fs.existsSync(script)) return "";
+  say("NDK missing — auto-installing termux-ndk (first time only, large download)...");
+  lastLog += "[valence] NDK missing — auto-installing termux-ndk (first time only, large download)...\n";
+  try {
+    runSetupScript(script, 25 * 60 * 1000);
+  } catch (e) {
+    say("NDK auto-install failed: " + e.message);
+    lastLog += "[valence] NDK auto-install failed: " + e.message + "\n";
+  }
+  return detectNdk();
+}
+
+/* System-wide Gradle (Termux/system install or auto-downloaded 8.7).
+ * Callers still prefer a project's own gradlew wrapper when present. */
+function ensureSystemGradle() {
+  const cands = [
+    process.env.PREFIX ? path.join(process.env.PREFIX, "bin", "gradle") : "",
+    "/data/data/com.termux/files/usr/bin/gradle",
+    "/usr/bin/gradle",
+    "/usr/local/bin/gradle",
+  ].filter(Boolean);
+  const found = cands.find(c => fs.existsSync(c));
+  if (found) return found;
+  const gdir = path.join(os.homedir(), ".valence", "gradle");
+  const gbin = path.join(gdir, "gradle-8.7", "bin", "gradle");
+  if (fs.existsSync(gbin)) return gbin;
+  say("no gradle wrapper/system gradle — auto-downloading Gradle 8.7 (~120MB, once)...");
+  lastLog += "[valence] no gradle wrapper/system gradle — auto-downloading Gradle 8.7 (~120MB, once)...\n";
+  try {
+    execSync(`mkdir -p "${gdir}" && (wget -q -O "${gdir}/g.zip" https://services.gradle.org/distributions/gradle-8.7-bin.zip || curl -fsSL -o "${gdir}/g.zip" https://services.gradle.org/distributions/gradle-8.7-bin.zip) && (command -v unzip >/dev/null 2>&1 || apt install -y unzip || (apt update -y && apt install -y unzip)) && unzip -q -o "${gdir}/g.zip" -d "${gdir}" && chmod +x "${gbin}" && rm -f "${gdir}/g.zip"`, { stdio: "inherit", timeout: 25 * 60 * 1000 });
+  } catch (e) {
+    say("Gradle auto-download failed: " + e.message);
+    lastLog += "[valence] Gradle auto-download failed: " + e.message + "\n";
+  }
+  return fs.existsSync(gbin) ? gbin : "";
 }
 
 function say(msg) { console.log(`[valence] ${msg}`); }
@@ -369,45 +428,17 @@ async function handleBuild(req, res) {
       scanC(projectDir);
       const sdkForCmake = ensureSdk();
       if (hasNativeC) ensureArmCmake(sdkForCmake);
-      let ndk0 = hasNativeC ? detectNdk() : "";
-      if (hasNativeC && !ndk0 && process.env.PREFIX) {
-        say("NDK missing — auto-installing termux-ndk (first time only, large download)...");
-        lastLog += "[valence] NDK missing — auto-installing termux-ndk (first time only, large download)...\n";
-        try {
-          execSync(`sh "${path.join(FRAMEWORK, "setup-termux-ndk.sh")}"`, { stdio: "inherit", timeout: 25 * 60 * 1000 });
-        } catch (e) {
-          say("NDK auto-install failed: " + e.message);
-          lastLog += "[valence] NDK auto-install failed: " + e.message + "\n";
-        }
-        ndk0 = detectNdk();
-      }
+      let ndk0 = hasNativeC ? ensureNdk() : "";
       if (hasNativeC && !ndk0) throw new Error("project contains C/C++/CMake — NDK not installed: run sh setup-termux-ndk.sh");
       const sdk0 = sdkForCmake || detectSdk();
+      if (!sdk0) throw new Error("Android SDK is missing and auto-install failed — check the Studio's terminal for the cause, or install manually: " + SCRIPT_SH + " backend/valence-framework/setup-termux-android.sh (or re-run: sh valence-studio.sh)");
       const hasWrapper = fs.existsSync(path.join(projectDir, "gradlew"));
       let gradleBin = "";
       if (hasWrapper) {
         fs.chmodSync(path.join(projectDir, "gradlew"), 0o755);
         gradleBin = path.join(projectDir, "gradlew");
       } else {
-        const cands = [
-          process.env.PREFIX ? path.join(process.env.PREFIX, "bin", "gradle") : "",
-          "/data/data/com.termux/files/usr/bin/gradle",
-          "/usr/bin/gradle",
-          "/usr/local/bin/gradle",
-        ].filter(Boolean);
-        const found = cands.find(c => fs.existsSync(c));
-        if (found) gradleBin = found;
-        else {
-          const gdir = path.join(os.homedir(), ".valence", "gradle");
-          const gbin = path.join(gdir, "gradle-8.7", "bin", "gradle");
-          if (fs.existsSync(gbin)) gradleBin = gbin;
-          else {
-            say("no gradle wrapper/system gradle — auto-downloading Gradle 8.7 (~120MB, once)...");
-            lastLog += "[valence] no gradle wrapper/system gradle — auto-downloading Gradle 8.7 (~120MB, once)...\n";
-            execSync(`mkdir -p "${gdir}" && (wget -q -O "${gdir}/g.zip" https://services.gradle.org/distributions/gradle-8.7-bin.zip || curl -fsSL -o "${gdir}/g.zip" https://services.gradle.org/distributions/gradle-8.7-bin.zip) && (command -v unzip >/dev/null 2>&1 || pkg install -y unzip) && unzip -q -o "${gdir}/g.zip" -d "${gdir}" && chmod +x "${gbin}" && rm -f "${gdir}/g.zip"`, { stdio: "inherit", timeout: 25 * 60 * 1000 });
-            if (fs.existsSync(gbin)) gradleBin = gbin;
-          }
-        }
+        gradleBin = ensureSystemGradle();
       }
 
       if (!gradleBin) throw new Error("no gradle available (wrapper, system, or auto-provisioned)");
@@ -471,7 +502,7 @@ async function handleBuild(req, res) {
     try { valMode = JSON.parse(fs.readFileSync(path.join(projectDir, fs.existsSync(path.join(projectDir, "valence.json")) ? "valence.json" : "cartridge.json"), "utf8")).mode || ""; } catch {}
     if (valMode !== "live" && !fs.existsSync(path.join(projectDir, "public", "index.html")) && !fs.existsSync(path.join(projectDir, "index.html"))) throw new Error("index.html is required (at root or public/)");
     const sdk = ensureSdk();
-    if (!sdk) throw new Error("Android SDK not found and could not be auto-installed. On Termux, check your network/storage and try again; on desktop, install Android Studio's SDK and set ANDROID_HOME.");
+    if (!sdk) throw new Error("Android SDK not found and could not be auto-installed. Check the Studio's terminal for the cause; on Termux re-run `sh valence-studio.sh` or run: " + SCRIPT_SH + " backend/valence-framework/setup-termux-android.sh — on desktop, install Android Studio's SDK and set ANDROID_HOME.");
     say(`building APK (sdk: ${sdk})`);
     const output = path.join(root, "app.apk");
     lastLog = await runBuild(projectDir, output, sdk);
@@ -627,6 +658,36 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" || req.method === "HEAD") return serveStatic(req, res);
   sendJson(res, 405, { error: "method not allowed" });
 });
+
+/* Automatic toolchain management — the "it just works" layer.
+ *   valence-studio.sh sets VALENCE_SETUP=1         → check/install, then serve
+ *   valence-cli.sh    sets VALENCE_TOOLCHAIN_ONLY=1 → check/install, then exit
+ * Every component (Java, SDK, cmake shims, NDK, Gradle) is SKIPPED when
+ * already installed, so re-runs are instant and nothing re-downloads.
+ * Opt-outs: VALENCE_SKIP_SETUP=1 (no check), VALENCE_SKIP_NDK=1 (no NDK). */
+const SETUP_FIRST = process.argv.includes("--setup") || process.env.VALENCE_SETUP === "1";
+const TOOLCHAIN_ONLY = process.env.VALENCE_TOOLCHAIN_ONLY === "1";
+
+function preflightSetup() {
+  say("toolchain: checking Java, Android SDK, cmake shims, NDK, Gradle — missing pieces auto-install...");
+  const sdk = ensureSdk();
+  say(sdk ? `toolchain: ✓ Android SDK → ${sdk}` : "toolchain: ✗ Android SDK not installed (auto-install is Termux-only; on desktop install the SDK and set ANDROID_HOME)");
+  if (sdk) ensureArmCmake(sdk);
+  let ndk = detectNdk();
+  if (!ndk && process.env.VALENCE_SKIP_NDK === "1") {
+    say("toolchain: – NDK skipped (VALENCE_SKIP_NDK=1 — only C/C++ projects need it)");
+  } else {
+    ndk = ensureNdk();
+    say(ndk ? `toolchain: ✓ Android NDK → ${ndk}` : "toolchain: ✗ Android NDK not installed (only needed for C/C++ projects)");
+  }
+  const gradle = ensureSystemGradle();
+  say(gradle ? `toolchain: ✓ Gradle → ${gradle}` : "toolchain: ✗ Gradle unavailable (projects shipping their own gradlew still build)");
+}
+if (TOOLCHAIN_ONLY || SETUP_FIRST) {
+  preflightSetup();
+  if (TOOLCHAIN_ONLY || process.env.VALENCE_SETUP_ONLY === "1") process.exit(0);
+  say("toolchain: ready — starting Studio.");
+}
 
 function startListening(port, attemptsLeft) {
   server.once("error", error => {
